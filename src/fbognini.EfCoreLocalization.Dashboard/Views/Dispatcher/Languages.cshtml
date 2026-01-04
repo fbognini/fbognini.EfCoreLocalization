@@ -1,0 +1,168 @@
+@{
+    Layout = DashboardContants.Layout;
+}
+
+@section Styles
+{
+
+    <!--datatable css-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" />
+    @*<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css">*@
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.dataTables.min.css">
+    
+    <link rel="stylesheet" href="/_content/fbognini.EfCoreLocalization.Dashboard/lib/Editor-2.0.5/css/editor.bootstrap5.css">
+}
+
+
+<h1 class="mb-3">Lingue</h1>
+
+<div class="row">
+    <table id="languages-table" class="table table-bordered dt-responsive nowrap table-striped align-middle" style="width:100%">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Descrizione</th>
+                <th>Attivo</th>
+                <th>Default</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+@section Scripts {
+    <!--datatable js-->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/1.11.3/dataRender/datetime.js"></script>
+    <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
+
+    <script src="/_content/fbognini.EfCoreLocalization.Dashboard/js/fbognini-pagination-1.0.1.js"></script>
+    <script src="/_content/fbognini.EfCoreLocalization.Dashboard/lib/Editor-2.0.5/js/dataTables.editor.js"></script>
+    <script src="/_content/fbognini.EfCoreLocalization.Dashboard/lib/Editor-2.0.5/js/editor.bootstrap5.js"></script>
+
+    <script>
+        let table;
+        let editor;
+        
+        $(document).ready(function () {
+            initializeDatatable();
+        });
+
+        function initializeDatatable() {
+            editor = new $.fn.dataTable.Editor({
+                idSrc: "id",
+                ajax: {
+                    create: restCreateEditorDatatables('@Url.Action("Create", "ApiLanguage", new { Area = DashboardContants.Area })'),
+                    edit: restEditEditorDatatables('@Url.Action("Update", "ApiLanguage", new { Area = DashboardContants.Area })'),
+                },
+                table: $("#languages-table"),
+                fields: [
+                    {
+                        label: "Id*",
+                        name: "id",
+                    },
+                    {
+                        label: "Descrizione*",
+                        name: "description",
+                    },
+                    {
+                        label: "Attivo",
+                        name: "isActive",
+                        type: "checkbox",
+                        separator: "",
+                        options: [
+                            { label: "", value: true }
+                        ],
+                        unselectedValue: false
+                    },
+                    {
+                        label: "Default",
+                        name: "isDefault",
+                        type: "checkbox",
+                        separator: "",
+                        options: [
+                            { label: "", value: true }
+                        ],
+                        unselectedValue: false
+                    },
+                ]
+            })
+            .on("initEdit", function () {
+                editor.disable('id');
+            })
+            .on("preSubmit", function (e, data, action) {
+                if (action !== 'remove') {
+                    let id = this.field('id');
+                    if (!id.isMultiValue()) {
+                        if (!id.val()) {
+                            id.error('Id obbligatorio');
+                        }
+                    }
+ 
+                    let description = this.field('description');
+                    if (!description.isMultiValue()) {
+                        if (!id.val()) {
+                            description.error('Descrizione obbligatoria');
+                        }
+                    }
+                    console.log("Data", data);
+
+                    let _data;
+                    if (action === 'edit') {
+                        _data = Object.values(data.data)[0];
+                    } else {
+                        _data = data.data[0];
+                    }
+
+                    _data.isActive = _data.isActive == "true" ? true : false;
+                    _data.isDefault = _data.isDefault == "true" ? true : false;
+                    console.log(_data);
+
+                    if (this.inError()) {
+                        return false;
+                    }
+                }
+            });
+            
+            table = $('#languages-table').DataTable({
+                dom: 'Bfrtip',
+                stateSave: false,
+                searching: false,
+                ajax: function (data, callback, settings) {
+                    let url = '@Url.Action("Search", "ApiLanguage", new { Area = DashboardContants.Area })';
+                    var func = fullSearchDatatables(url);
+                    func(data, callback, settings);
+                },
+                order: [[0, "desc"]],
+                // Columns Setups
+                columns: [
+                    { data: "id", required:"true" },
+                    { data: "description" },
+                    { data: "isActive", type: "checkbox" },
+                    { data: "isDefault", type: "checkbox" },
+                ],
+                select: {
+                    style: 'single'
+                },
+                buttons: [
+                    {
+                        text: "Nuovo",
+                        extend: "create",
+                        editor: editor,
+                        className: "btn btn-primary"
+                    },
+                    {
+                        text: "Modifica",
+                        extend: "editSingle",
+                        editor: editor,
+                        className: "btn btn-primary"
+                    }
+                ],
+
+            });
+        }
+    </script>
+}

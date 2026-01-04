@@ -1,0 +1,29 @@
+﻿using System.Collections.Generic;
+
+namespace fbognini.EfCoreLocalization
+{
+    public class EfCoreLocalizationSettings
+    {
+        public string? DefaultSchema { get; set; }       
+
+        
+        /// <summary>
+        /// If GlobalResourceId has a value, it will be used as ResourceId for everything => Only property names are used to find the translations
+        /// </summary>
+        public string? GlobalResourceId { get; set; }
+
+        public string? ResourceIdPrefix { get; set; }
+        public List<string> RemovePrefixs { get; set; } = [];
+        public List<string> RemoveSuffixs { get; set; } = [];
+
+        /// <summary>
+        /// Returns only the Key if the value is not found. If set to false, the search key in the database is returned.
+        /// </summary>
+        public bool ReturnOnlyKeyIfNotFound { get; set; }
+
+        /// <summary>
+        /// Creates a new item in the SQL database if the resource is not found
+        /// </summary>
+        public bool CreateNewRecordWhenDoesNotExists { get; set; }
+    }
+}

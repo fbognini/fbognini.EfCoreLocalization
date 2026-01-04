@@ -1,0 +1,73 @@
+{
+  "sEmptyTable": "Nessun dato presente nella tabella",
+  "info": "Vista da _START_ a _END_ di _TOTAL_ elementi",
+  "sInfoEmpty": "Vista da 0 a 0 di 0 elementi",
+  "sInfoFiltered": "(filtrati da _MAX_ elementi totali)",
+  "sInfoPostFix": "",
+  "sInfoThousands": ".",
+  "sLengthMenu": "Visualizza _MENU_ elementi",
+  "sLoadingRecords": "Caricamento...",
+  "sProcessing": "Elaborazione...",
+  "sSearch": "Cerca:",
+  "sZeroRecords": "La ricerca non ha portato alcun risultato.",
+  "paginate": {
+    "first": "Inizio",
+    "previous": "Precedente",
+    "next": "Successivo",
+    "last": "Fine"
+  },
+  "buttons": {
+    "selectAll": "Seleziona tutti",
+    "selectNone": "Deseleziona tutti"
+  },
+  "select": {
+    "rows": {
+      "_": "%d righe selezionate",
+      "0": "",
+      "1": ""
+    }
+  },
+  "oAria": {
+    "sSortAscending": ": attiva per ordinare la colonna in ordine crescente",
+    "sSortDescending": ": attiva per ordinare la colonna in ordine decrescente"
+  },
+  "editor": {
+    "close": "Chiudi",
+    "create": {
+      "button": "Nuovo",
+      "title": "Crea nuovo entità",
+      "submit": "Crea"
+    },
+    "edit": {
+      "button": "Modifica",
+      "title": "Modifica entità",
+      "submit": "Aggiorna"
+    },
+    "remove": {
+      "button": "Elimina",
+      "title": "Elimina",
+      "submit": "Elimina",
+      "confirm": {
+        "_": "Sei sicuro di voler elimare %d righe?",
+        "1": "Sei sicuro di voler elimare 1 riga?"
+      }
+    },
+    "error": {
+      "system": "Si è verificato un problema interno (maggiori informationi)"
+    },
+    "multi": {
+      "title": "Valore multiplo",
+      "info": "Gli elementi selezionato contengono valori differenti per questo campo. Per modificare e impostare tutti i valori di questo campo allo stesso valore clicca o tocca qui, altrimenti rimarranno invariati.",
+      "restore": "Annulla modifiche",
+      "noMulti": "Questo campo può essere modificato individualmente, ma non come parte di un gruppo."
+    },
+    "datetime": {
+      "previous": "Precedente",
+      "next": "Successivo",
+      "months": [ "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre" ],
+      "weekdays": [ "Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab" ],
+      "amPm": [ "am", "pm" ],
+      "unknown": "-"
+    }
+  }
+}

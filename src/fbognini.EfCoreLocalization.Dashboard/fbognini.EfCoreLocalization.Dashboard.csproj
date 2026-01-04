@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+		<Version>0.0.1</Version>
+		<Authors>Francesco Bognini</Authors>
+		<Company>Francesco Bognini</Company>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageProjectUrl>https://github.com/fbognini/fbognini.EfCoreLocalization</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/fbognini/fbognini.EfCoreLocalization</RepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="fbognini.WebFramework" Version="11.3.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\LICENSE" Pack="true" PackagePath="" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\fbognini.EfCoreLocalization\fbognini.EfCoreLocalization.csproj" />
+	</ItemGroup>
+
+
+</Project>

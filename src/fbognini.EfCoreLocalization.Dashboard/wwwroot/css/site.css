@@ -1,0 +1,30 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+
+/* Datatables */
+tbody tr.selected, table.dataTable.table-striped > tbody > tr.odd.selected {
+    color: white !important;
+    background-color: #1f6bff !important;
+}
+
+.table-striped > tbody > tr.selected:nth-of-type(odd) > * {
+    color: white !important;
+}
+

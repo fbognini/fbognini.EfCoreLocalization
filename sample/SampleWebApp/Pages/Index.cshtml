@@ -1,0 +1,27 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>@Localizer["HeroText"]</p>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+    @* <form id="account" method="post">
+
+        <div class="mb-3">
+            <label asp-for="Input.Email" class="form-label"></label>
+            <input asp-for="Input.Email" class="form-control" aria-required="true" />
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-primary w-100" type="submit">@Localizer["Button"]</button>
+        </div>
+
+    </form> *@
+</div>

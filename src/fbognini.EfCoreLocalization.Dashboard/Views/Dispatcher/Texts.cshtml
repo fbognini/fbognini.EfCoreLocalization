@@ -1,0 +1,180 @@
+@{
+    Layout = DashboardContants.Layout;
+}
+
+@section Styles
+{
+
+    <!--datatable css-->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.dataTables.min.css">
+    
+    <link rel="stylesheet" href="/_content/fbognini.EfCoreLocalization.Dashboard/lib/Editor-2.0.5/css/editor.bootstrap5.css">
+}
+
+
+<h1 class="mb-3">Testi</h1>
+<div class="row mb-3">
+    <div class="col-lg-6">
+        <div class="mb-3">
+          <label for="text-filter" class="form-label">Testo</label>
+          <input type="text" class="form-control" id="text-filter">
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="mb-3">
+            <label for="resource-filter" class="form-label">Risorsa</label>
+            <input type="text" class="form-control" id="resource-filter">
+        </div>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col-12">
+        <button id="submit-form-btn" type="button" class="btn btn-primary">Cerca</button>
+        <button id="clear-form-btn" type="button" class="btn btn-secondary">Svuota filtri</button>
+    </div>
+</div>
+<hr />
+<div class="row">
+    <table id="texts-table" class="table table-bordered dt-responsive nowrap table-striped align-middle" style="width:100%">
+        <thead>
+            <tr>
+                <th>Testo</th>
+                <th>Risorsa</th>
+                <th>Descrizione</th>
+                <th>Data creazione</th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+@section Scripts {
+    <!--datatable js-->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/1.11.3/dataRender/datetime.js"></script>
+    <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+    <script src="/_content/fbognini.EfCoreLocalization.Dashboard/js/fbognini-pagination-1.0.1.js"></script>
+    <script src="/_content/fbognini.EfCoreLocalization.Dashboard/lib/Editor-2.0.5/js/dataTables.editor.js"></script>
+    <script src="/_content/fbognini.EfCoreLocalization.Dashboard/lib/Editor-2.0.5/js/editor.bootstrap5.js"></script>
+
+    <script>
+        let table;
+        let editor;
+        
+        $(document).ready(function () {
+            initializeDatatable();
+
+            $("#submit-form-btn").on("click", function () {
+                table.ajax.reload();
+            });
+
+            $("#clear-form-btn").on("click", function () {
+                $("#resource-filter").val("");
+                $("#text-filter").val("");
+
+                table.ajax.reload();
+            });
+        });
+
+        function initializeDatatable() {
+            editor = new $.fn.dataTable.Editor({
+                idSrc: "id",
+                ajax: {
+                    create: restCreateEditorDatatables('@Url.Action("Create", "ApiText", new { Area = DashboardContants.Area })'),
+                    remove: function (_, _, d, success, error) {
+                        let _data = Object.values(d.data)[0];
+                        restRemoveEditorDatatablesInner('@Url.Action("Delete", "ApiText", new { Area = DashboardContants.Area })' + "?textId=" + _data.textId + "&resourceId=" + _data.resourceId, d, success, error);
+                    },
+                },
+                table: $("#texts-table"),
+                fields: [
+                    {
+                        label: "Testo*",
+                        name: "textId",
+                    },
+                    {
+                        label: "Risorsa*",
+                        name: "resourceId",
+                    },
+                    {
+                        label: "Descrizione",
+                        name: "description",
+                    },
+                ]
+            })
+            .on("preSubmit", function (e, data, action) {
+                if (action !== 'remove') {
+                    let textId = this.field('textId');
+                    if (!textId.isMultiValue()) {
+                        if (!textId.val()) {
+                            textId.error('Testo obbligatorio');
+                        }
+                    }
+
+                    let resourceId = this.field('resourceId');
+                    if (!resourceId.isMultiValue()) {
+                        if (!resourceId.val()) {
+                            resourceId.error('Risorsa obbligatorio');
+                        }
+                    }
+
+                    if (this.inError()) {
+                        return false;
+                    }
+                }
+            });
+            
+            table = $('#texts-table').DataTable({
+                dom: 'Bfrtip',
+                stateSave: false,
+                searching: false,
+                ajax: function (data, callback, settings) {
+                    let url = '@Url.Action("Search", "ApiText", new { Area = DashboardContants.Area })?resourceId=' + $("#resource-filter").val() + "&textId=" + $("#text-filter").val();
+                    var func = fullSearchDatatables(url);
+                    func(data, callback, settings);
+                },
+                order: [[0, "desc"]],
+                // Columns Setups
+                columns: [
+                    { data: "textId" },
+                    { data: "resourceId" },
+                    { data: "description" },
+                    { 
+                        data: "createdOnUtc",
+                        render: renderDatatableDateTime(["YYYY-MM-DDTHH:mm:ss.SSSSSSS", "YYYY-MM-DDTHH:mm:ss.SSSSSSSZ"], 'DD/MM/YYYY HH:mm')
+                    },
+                ],
+                select: {
+                    style: 'single'
+                },
+                buttons: [
+                    {
+                        text: "Nuovo",
+                        extend: "create",
+                        editor: editor,
+                        className: "btn btn-primary"
+                    },
+                    {
+                        text: "Rimuovi",
+                        extend: "remove",
+                        editor: editor,
+                        formMessage: function (e, dt) {
+                            return (
+                                'Sei sicuro di voler eliminare il testo selezionato?<br/>Procedendo verranno eliminate anche le relative traduzioni'
+                            );
+                        },
+                        className: "btn btn-primary"
+                    }
+                ],
+
+            });
+        }
+    </script>
+}
