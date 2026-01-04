@@ -251,7 +251,3 @@ Check out the `SampleWebApp` project in the repository for a complete working ex
 ## Acknowledgments
 
 This code was freely inspired by [AspNetCoreLocalization](https://github.com/damienbod/AspNetCoreLocalization) by damienbod.
-
-## License
-
-See the LICENSE file for details.
