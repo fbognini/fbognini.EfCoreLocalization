@@ -1,5 +1,7 @@
 ﻿using fbognini.EfCoreLocalization.Persistence;
 using fbognini.EfCoreLocalization.Persistence.Entities;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using System;
@@ -26,18 +28,18 @@ namespace fbognini.EfCoreLocalization.Localizers
 
         public IStringLocalizer Create(Type resourceSource)
         {
-            return Create(GetResourceIdFromType(resourceSource));
+            var resourceId = GetResourceIdFromType(resourceSource);
+            return Create(resourceId);
         }
 
         public IStringLocalizer Create(string baseName, string location)
         {
-            return Create(GetCompositeResourceId(baseName, location));
+            var resourceId = GetCompositeResourceId(baseName, location);
+            return Create(resourceId);
         }
 
         private IStringLocalizer Create(string resourceId)
         {
-            resourceId = NormalizeResourceId(resourceId);
-
             if (_localizers.TryGetValue(resourceId, out IStringLocalizer? localizer))
             {
                 return localizer;
@@ -55,18 +57,18 @@ namespace fbognini.EfCoreLocalization.Localizers
 
         public void ResetCache(Type resourceSource)
         {
-            ResetCache(GetResourceIdFromType(resourceSource));
+            var resourceId = GetResourceIdFromType(resourceSource);
+            ResetCache(resourceId);
         }
 
         public void ResetCache(string baseName, string location)
         {
-            ResetCache(GetCompositeResourceId(baseName, location));
+            var resourceId = GetCompositeResourceId(baseName, location);
+            ResetCache(resourceId);
         }
 
         private void ResetCache(string resourceId)
         {
-            resourceId = NormalizeResourceId(resourceId);
-
             _localizers.TryRemove(resourceId, out _);
             _localizationRepository.DetachAllEntities();
         }
@@ -84,12 +86,12 @@ namespace fbognini.EfCoreLocalization.Localizers
                 return _efCoreLocalizationSettings.GlobalResourceId;
             }
 
-            foreach (var suffix in _efCoreLocalizationSettings.RemoveSuffixs.Where(s => key.EndsWith(s)))
+            foreach (var suffix in _efCoreLocalizationSettings.RemoveSuffixsFromTypes.Where(s => key.EndsWith(s)))
             {
                 key = key[..^suffix.Length];
             }
 
-            foreach (var prefix in _efCoreLocalizationSettings.RemovePrefixs.Where(s => key.StartsWith(s)))
+            foreach (var prefix in _efCoreLocalizationSettings.RemovePrefixsFromTypes.Where(s => key.StartsWith(s)))
             {
                 key = key[prefix.Length..];
             }
@@ -104,7 +106,20 @@ namespace fbognini.EfCoreLocalization.Localizers
 
         private string GetCompositeResourceId(string baseName, string location)
         {
-            string resourceKey = string.IsNullOrWhiteSpace(location) || baseName.StartsWith(location) ? baseName : $"{location}.{baseName}";
+            string resourceKey = _efCoreLocalizationSettings.IgnoreResourceLocation || string.IsNullOrWhiteSpace(location) || baseName.StartsWith(location) 
+                ? baseName 
+                : $"{location}.{baseName}";
+
+            foreach (var prefix in _efCoreLocalizationSettings.RemovePrefixsFromLocations.Where(s => resourceKey.StartsWith(s)))
+            {
+                var startFrom = prefix.EndsWith('.') ? prefix.Length : prefix.Length + 1;
+                resourceKey = resourceKey[startFrom..];
+            }
+
+            if (!string.IsNullOrWhiteSpace(_efCoreLocalizationSettings.ResourceIdPrefix))
+            {
+                resourceKey = $"{_efCoreLocalizationSettings.ResourceIdPrefix}.{resourceKey}";
+            }
 
             //if (string.IsNullOrWhiteSpace(location))
             //    return baseName;
@@ -121,7 +136,8 @@ namespace fbognini.EfCoreLocalization.Localizers
             var attribute = resourceSource.GetCustomAttributes(typeof(LocalizationKeyAttribute), false).SingleOrDefault();
             if (attribute == null)
             {
-                return GetRecursiveResourceName(resourceSource);
+                var resourceId = GetRecursiveResourceName(resourceSource);
+                return NormalizeResourceId(resourceId);
             }
 
             return ((LocalizationKeyAttribute)attribute).Key;

@@ -3,13 +3,16 @@
 	<PropertyGroup>
 		<PackageId>fbognini.EfCoreLocalization</PackageId>
 		<TargetFrameworks>net8.0</TargetFrameworks>
-		<Version>0.0.1</Version>
+		<Version>0.1.0</Version>
 		<Authors>Francesco Bognini</Authors>
-		<Company>Francesco Bognini</Company>
+		<Company />
+		<Description>A flexible, database-driven localization provider for ASP.NET Core using Entity Framework Core</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageProjectUrl>https://github.com/fbognini/fbognini.EfCoreLocalization</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/fbognini/fbognini.EfCoreLocalization</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>Localization, EF Core, Database localization</PackageTags>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
