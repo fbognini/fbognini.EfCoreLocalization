@@ -16,7 +16,7 @@ var cs = builder.Configuration.GetConnectionString("DefaultConnection")!;
 builder.Services.AddDbContext<EfCoreLocalizationDbContext>(options => options.UseSqlServer(cs, b => b.MigrationsAssembly("SampleWebApp")), ServiceLifetime.Singleton, ServiceLifetime.Singleton);
 
 builder.Services.AddEfCoreLocalization(builder.Configuration);
-builder.Services.AddEfCoreLocalizationDashboard();
+//builder.Services.AddEfCoreLocalizationDashboard();
 
 var app = builder.Build();
 
@@ -40,7 +40,7 @@ await app.ApplyMigrationEFCoreLocalization();
 app.UseRequestLocalizationWithEFCoreLocalization();
 
 var dashboardOptions = new DashboardOptions() { };
-app.UseEfCoreLocalizationDashboard(options: dashboardOptions);
+app.UseLocalizationDashboard(options: dashboardOptions);
 
 app.UseAuthorization();
 

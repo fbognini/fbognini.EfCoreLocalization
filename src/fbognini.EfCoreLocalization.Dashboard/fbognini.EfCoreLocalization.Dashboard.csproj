@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<PackageId>fbognini.EfCoreLocalization.Dashboard</PackageId>
@@ -12,14 +12,14 @@
 		<PackageProjectUrl>https://github.com/fbognini/fbognini.EfCoreLocalization</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/fbognini/fbognini.EfCoreLocalization</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<PackageTags>Localization, EF Core, Database localization</PackageTags>
+		<PackageTags>localization;efcore;entity-framework;aspnetcore;dashboard;i18n;translations;database localization;</PackageTags>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="fbognini.WebFramework" Version="11.3.2" />
+		<PackageReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -28,8 +28,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\fbognini.EfCoreLocalization\fbognini.EfCoreLocalization.csproj" />
+		<ProjectReference Include="..\fbognini.EfCoreLocalization\fbognini.EfCoreLocalization.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<EmbeddedResource Include="wwwroot\**\*" />
+	</ItemGroup>
 
 </Project>

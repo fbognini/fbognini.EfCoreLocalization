@@ -1,5 +1,7 @@
 html {
   font-size: 14px;
+  position: relative;
+  min-height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -8,15 +10,33 @@ html {
   }
 }
 
-html {
-  position: relative;
-  min-height: 100%;
-}
-
 body {
   margin-bottom: 60px;
+  background-color: #f8f9fa;
 }
 
+/* Navbar */
+.navbar-brand {
+  font-weight: bold;
+}
+
+/* Page Content */
+.page-content {
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Tables */
+.table-responsive {
+  background: white;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  padding: 1rem;
+}
 
 /* Datatables */
 tbody tr.selected, table.dataTable.table-striped > tbody > tr.odd.selected {
@@ -26,5 +46,32 @@ tbody tr.selected, table.dataTable.table-striped > tbody > tr.odd.selected {
 
 .table-striped > tbody > tr.selected:nth-of-type(odd) > * {
     color: white !important;
+}
+
+/* Buttons */
+.btn-sm {
+  margin: 0 2px;
+}
+
+/* Modals */
+.modal-header {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.modal-header .btn-close {
+  filter: invert(1);
+}
+
+/* Filters */
+.mb-3.row {
+  margin-bottom: 1rem !important;
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #6c757d;
 }
 

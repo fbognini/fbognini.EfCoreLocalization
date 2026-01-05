@@ -12,7 +12,7 @@
 		<PackageProjectUrl>https://github.com/fbognini/fbognini.EfCoreLocalization</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/fbognini/fbognini.EfCoreLocalization</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<PackageTags>Localization, EF Core, Database localization</PackageTags>
+		<PackageTags>localization;efcore;entity-framework;aspnetcore;dashboard;i18n;translations;database localization;</PackageTags>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 

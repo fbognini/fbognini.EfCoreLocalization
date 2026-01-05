@@ -1,57 +1,59 @@
 ﻿using fbognini.EfCoreLocalization.Dashboard.Authorization;
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace fbognini.EfCoreLocalization.Dashboard
+namespace fbognini.EfCoreLocalization.Dashboard;
+
+internal class DashboardMiddleware
 {
-    internal class DashboardMiddleware
+    private readonly RequestDelegate _next;
+    private readonly DashboardOptions _options;
+    private readonly string _pathMatch;
+
+    public DashboardMiddleware(RequestDelegate next, DashboardOptions options, string pathMatch)
     {
-        private readonly RequestDelegate _next;
-        private readonly DashboardOptions options;
+        _next = next;
+        _options = options;
+        _pathMatch = pathMatch.TrimEnd('/');
+    }
 
-        public DashboardMiddleware(RequestDelegate next, DashboardOptions dashboardOptions)
+    public async Task InvokeAsync(HttpContext context)
+    {
+        var path = context.Request.Path.Value ?? string.Empty;
+        
+        if (!path.StartsWith(_pathMatch, StringComparison.OrdinalIgnoreCase))
         {
-            _next = next;
-            this.options = dashboardOptions;
-        }
-
-        public async Task Invoke(HttpContext context)
-        {
-            var dashboardContext = new DashboardContext(context);
-
-            foreach (var filter in options.Authorization)
-            {
-                if (!filter.Authorize(dashboardContext))
-                {
-                    context.Response.StatusCode = GetUnauthorizedStatusCode(context);
-                    return;
-                }
-            }
-
-            foreach (var filter in options.AsyncAuthorization)
-            {
-                if (!await filter.AuthorizeAsync(dashboardContext))
-                {
-                    context.Response.StatusCode = GetUnauthorizedStatusCode(context);
-                    return;
-                }
-            }
-
             await _next(context);
+            return;
         }
-        private static int GetUnauthorizedStatusCode(HttpContext httpContext)
+
+        var dashboardContext = new DashboardContext(context);
+
+        foreach (var filter in _options.Authorization)
         {
-            return httpContext.User?.Identity?.IsAuthenticated == true
-                ? (int)HttpStatusCode.Forbidden
-                : (int)HttpStatusCode.Unauthorized;
+            if (!filter.Authorize(dashboardContext))
+            {
+                context.Response.StatusCode = GetUnauthorizedStatusCode(context);
+                return;
+            }
         }
+
+        foreach (var filter in _options.AsyncAuthorization)
+        {
+            if (!await filter.AuthorizeAsync(dashboardContext))
+            {
+                context.Response.StatusCode = GetUnauthorizedStatusCode(context);
+                return;
+            }
+        }
+
+        await _next(context);
+    }
+
+    private static int GetUnauthorizedStatusCode(HttpContext httpContext)
+    {
+        return httpContext.User?.Identity?.IsAuthenticated == true
+            ? (int)HttpStatusCode.Forbidden
+            : (int)HttpStatusCode.Unauthorized;
     }
 }
