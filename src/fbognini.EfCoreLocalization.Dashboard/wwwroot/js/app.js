@@ -142,8 +142,17 @@ const languagesManager = {
 
     init() {
         this.modal = new bootstrap.Modal(document.getElementById('language-modal'));
-        this.table = $('#languages-table').DataTable({
-            ajax: fullSearchDatatables(() => `${API_BASE}/languages/paginated`),
+
+        let parameters = {
+            q: true,
+            lenght: true,
+            start: true,
+            sort: true,
+        };
+
+        const options = {
+            drawCallback: fullSearchDatatablesCallbackWithLocation(parameters),
+            ajax: fullSearchDatatables(() => `${API_BASE}/languages`),
             order: [[0, 'asc']],
             columns: [
                 { data: 'id' },
@@ -161,10 +170,17 @@ const languagesManager = {
                 {
                     data: null,
                     orderable: false,
-                    render: (data, type, row) => `<button class="btn btn-sm btn-primary" onclick="languagesManager.edit('${row.id}')">Edit</button>`
+                    render: (data, type, row) => {
+                        const id = row.id.replace(/'/g, "\\'");
+                        return `<button class="btn btn-sm btn-primary" onclick="languagesManager.edit('${id}')">Edit</button>`;
+                    }
                 }
             ],
-        });
+        };
+
+        overrideDatatableFullSearchOptionsWithLocation(options, parameters);
+        this.table = $('#languages-table').DataTable(options);
+
     },
 
     load() {
@@ -184,25 +200,22 @@ const languagesManager = {
     },
 
     edit(id) {
-        fetch(`${API_BASE}/languages`)
-            .then(res => res.json())
-            .then(languages => {
-                const language = languages.find(l => l.id === id);
-                if (language) {
-                    document.getElementById('language-modal-title').textContent = 'Edit Language';
-                    document.getElementById('language-id').value = language.id;
-                    document.getElementById('language-code').value = language.id;
-                    document.getElementById('language-code').readOnly = true;
-                    document.getElementById('language-description').value = language.description || '';
-                    document.getElementById('language-active').checked = language.isActive || false;
-                    document.getElementById('language-default').checked = language.isDefault || false;
-                    this.modal.show();
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Error loading language');
-            });
+        // Find the row in the DataTable
+        const rowData = this.table.rows().data().toArray().find(row => row.id === id);
+        
+        if (!rowData) {
+            alert('Language not found');
+            return;
+        }
+
+        document.getElementById('language-modal-title').textContent = 'Edit Language';
+        document.getElementById('language-id').value = rowData.id;
+        document.getElementById('language-code').value = rowData.id;
+        document.getElementById('language-code').readOnly = true;
+        document.getElementById('language-description').value = rowData.description || '';
+        document.getElementById('language-active').checked = rowData.isActive || false;
+        document.getElementById('language-default').checked = rowData.isDefault || false;
+        this.modal.show();
     },
 
     save() {
@@ -250,8 +263,17 @@ const textsManager = {
 
     init() {
         this.modal = new bootstrap.Modal(document.getElementById('text-modal'));
-        this.table = $('#texts-table').DataTable({
-            ajax: fullSearchDatatables(() => `${API_BASE}/texts/paginated`),
+
+        let parameters = {
+            q: true,
+            lenght: true,
+            start: true,
+            sort: true,
+        };
+
+        const options = {
+            drawCallback: fullSearchDatatablesCallbackWithLocation(parameters),
+            ajax: fullSearchDatatables(() => `${API_BASE}/texts`),
             ordering: false,
             columns: [
                 { data: 'textId' },
@@ -264,10 +286,21 @@ const textsManager = {
                 {
                     data: null,
                     orderable: false,
-                    render: (data, type, row) => `<button class="btn btn-sm btn-danger" onclick="textsManager.delete('${row.textId.replace(/'/g, "\\'")}', '${row.resourceId.replace(/'/g, "\\'")}')">Delete</button>`
+                    render: (data, type, row) => {
+                        const textId = row.textId.replace(/'/g, "\\'");
+                        const resourceId = row.resourceId.replace(/'/g, "\\'");
+                        return `
+                            <button class="btn btn-sm btn-primary me-1" onclick="textsManager.viewTranslations('${textId}', '${resourceId}')">View translations</button>
+                            <button class="btn btn-sm btn-danger" onclick="textsManager.delete('${textId}', '${resourceId}')">Delete</button>
+                        `;
+                    }
                 }
             ],
-        });
+        };
+
+        overrideDatatableFullSearchOptionsWithLocation(options, parameters);
+        this.table = $('#texts-table').DataTable(options);
+
     },
 
     load() {
@@ -316,6 +349,17 @@ const textsManager = {
             });
     },
 
+    viewTranslations(textId, resourceId) {
+        // Navigate to translations page with filters
+        const url = new URL(`${BASE_PATH}/translations`, window.location.origin);
+        url.searchParams.set('textId', textId);
+        url.searchParams.set('resourceId', resourceId);
+        
+        // Update URL and navigate
+        window.history.pushState({ page: 'translations' }, '', url.toString());
+        router.navigate('translations', false);
+    },
+
     delete(textId, resourceId) {
         if (!confirm(`Are you sure you want to delete text "${textId}" in resource "${resourceId}"?`)) {
             return;
@@ -358,11 +402,11 @@ const translationsManager = {
         // Load languages for filter
         fetch(`${API_BASE}/languages`)
             .then(res => res.json())
-            .then(languages => {
-                this.languages = languages;
+            .then(response => {
+                this.languages = response.items;
                 const select = document.getElementById('filter-language');
                 select.innerHTML = '<option value="">All Languages</option>';
-                languages.forEach(lang => {
+                this.languages.forEach(lang => {
                     const option = document.createElement('option');
                     option.value = lang.id;
                     option.textContent = `${lang.id} - ${lang.description}`;
@@ -375,8 +419,16 @@ const translationsManager = {
                 }
             });
 
-        this.table = $('#translations-table').DataTable({
-            ajax: fullSearchDatatables(() => combineEndpointWithCurrentSearch(`${API_BASE}/translations/paginated`)),
+        let parameters = {
+            q: true,
+            lenght: true,
+            start: true,
+            sort: true,
+        };
+
+        const options = {
+            drawCallback: fullSearchDatatablesCallbackWithLocation(parameters),
+            ajax: fullSearchDatatables(() => combineEndpointWithCurrentSearch(`${API_BASE}/translations`)),
             order: [[0, 'asc']],
             columns: [
                 { data: 'languageId' },
@@ -398,7 +450,11 @@ const translationsManager = {
                     }
                 }
             ],
-        });
+        };
+
+        overrideDatatableFullSearchOptionsWithLocation(options, parameters);
+        this.table = $('#translations-table').DataTable(options);
+
     },
 
     loadFiltersFromUrl() {
@@ -472,26 +528,27 @@ const translationsManager = {
     },
 
     edit(languageId, textId, resourceId) {
-        fetch(`${API_BASE}/translations/paginated?languageId=${encodeURIComponent(languageId)}&textId=${encodeURIComponent(textId)}&resourceId=${encodeURIComponent(resourceId)}`)
-            .then(res => res.json())
-            .then(result => {
-                const translation = result.items.find(t =>
-                    t.languageId === languageId &&
-                    t.textId === textId &&
-                    t.resourceId === resourceId
-                );
-                if (translation) {
-                    document.getElementById('translation-modal-title').textContent = 'Edit Translation';
-                    document.getElementById('translation-languageid').value = translation.languageId;
-                    document.getElementById('translation-textid').value = translation.textId;
-                    document.getElementById('translation-resourceid').value = translation.resourceId;
-                    document.getElementById('translation-language-display').value = translation.languageId;
-                    document.getElementById('translation-textid-display').value = translation.textId;
-                    document.getElementById('translation-resourceid-display').value = translation.resourceId;
-                    document.getElementById('translation-destination').value = translation.destination;
-                    this.modal.show();
-                }
-            });
+        // Find the row in the DataTable
+        const rowData = this.table.rows().data().toArray().find(row => 
+            row.languageId === languageId && 
+            row.textId === textId && 
+            row.resourceId === resourceId
+        );
+        
+        if (!rowData) {
+            alert('Translation not found');
+            return;
+        }
+
+        document.getElementById('translation-modal-title').textContent = 'Edit Translation';
+        document.getElementById('translation-languageid').value = rowData.languageId;
+        document.getElementById('translation-textid').value = rowData.textId;
+        document.getElementById('translation-resourceid').value = rowData.resourceId;
+        document.getElementById('translation-language-display').value = rowData.languageId;
+        document.getElementById('translation-textid-display').value = rowData.textId;
+        document.getElementById('translation-resourceid-display').value = rowData.resourceId;
+        document.getElementById('translation-destination').value = rowData.destination || '';
+        this.modal.show();
     },
 
     save() {

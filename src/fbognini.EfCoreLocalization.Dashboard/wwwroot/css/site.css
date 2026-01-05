@@ -15,14 +15,21 @@ body {
   background-color: #f8f9fa;
 }
 
-/* Navbar */
 .navbar-brand {
   font-weight: bold;
 }
 
-/* Page Content */
+.nav-link.active {
+    font-weight: bold;
+}
+
 .page-content {
-  animation: fadeIn 0.3s;
+    display: none;
+    animation: fadeIn 0.3s;
+}
+
+.page-content.active {
+    display: block;
 }
 
 @keyframes fadeIn {
@@ -38,21 +45,6 @@ body {
   padding: 1rem;
 }
 
-/* Datatables */
-tbody tr.selected, table.dataTable.table-striped > tbody > tr.odd.selected {
-    color: white !important;
-    background-color: #1f6bff !important;
-}
-
-.table-striped > tbody > tr.selected:nth-of-type(odd) > * {
-    color: white !important;
-}
-
-/* Buttons */
-.btn-sm {
-  margin: 0 2px;
-}
-
 /* Modals */
 .modal-header {
   background-color: #0d6efd;
@@ -63,15 +55,7 @@ tbody tr.selected, table.dataTable.table-striped > tbody > tr.odd.selected {
   filter: invert(1);
 }
 
-/* Filters */
-.mb-3.row {
-  margin-bottom: 1rem !important;
+.form-control:read-only {
+    background-color: var(--bs-secondary-bg);
+    opacity: 1;
 }
-
-/* Loading */
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: #6c757d;
-}
-

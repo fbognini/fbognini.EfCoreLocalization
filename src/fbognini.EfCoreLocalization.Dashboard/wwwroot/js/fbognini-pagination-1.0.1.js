@@ -28,6 +28,9 @@ var getFullSearchUrlFromDatatablesClientSide = function (url, settings, data, pa
 
     data.sort = sorts;
 
+    data.search.value = data.search.search;
+    delete data.search.search;
+
     return getFullSearchUrlFromDatatablesInner(url, data, parameters);
 }
 
@@ -189,27 +192,18 @@ var overrideDatatableFullSearchOptionsWithLocation = function (options, paramete
         sorts.push({ dir: sortsDir[i], by: sortsBy[i] })
     }
 
-    var data = {
-        search: {
-            value: q
-        },
-        length: length,
-        start: start,
-        sort: sorts
-    };
-
-    if (parameters.sort && data.sort) {
+    if (parameters.sort && sorts) {
 
         var order = [];
 
-        for (var i = 0; i < data.sort.length; i++) {
+        for (var i = 0; i < sorts.length; i++) {
 
             var index = options.columns.findIndex(function (item) {
-                return item.data === data.sort[i].by;
+                return item.data === sorts[i].by;
             });
 
             if (index != -1) {
-                order.push([index, data.sort[i].dir]);
+                order.push([index, sorts[i].dir]);
             }
         }
 
@@ -218,16 +212,16 @@ var overrideDatatableFullSearchOptionsWithLocation = function (options, paramete
         }
     }
 
-    if (parameters.start && data.start && !isNaN(data.start)) {
-        options.displayStart = parseInt(data.start);
+    if (parameters.start && start && !isNaN(start)) {
+        options.displayStart = parseInt(start);
     }
 
-    if (parameters.length && data.length && !isNaN(data.length)) {
-        options.pageLength = parseInt(data.length);
+    if (parameters.length && length && !isNaN(length)) {
+        options.pageLength = parseInt(length);
     }
 
-    if (parameters.search && data.search && data.search.value) {
-        options.search = { search: data.search.value };
+    if (parameters.q && q) {
+        options.search = { search: q, regex: false };
     }
 }
 

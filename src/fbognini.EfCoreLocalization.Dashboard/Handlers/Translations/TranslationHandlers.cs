@@ -1,6 +1,4 @@
-using fbognini.Core.Domain.Query;
 using fbognini.Core.Domain.Query.Pagination;
-using fbognini.EfCoreLocalization.Dashboard.Handlers.Translations;
 using fbognini.EfCoreLocalization.Dashboard.Helpers;
 using fbognini.EfCoreLocalization.Persistence;
 using fbognini.EfCoreLocalization.Persistence.Entities;
@@ -8,9 +6,8 @@ using fbognini.WebFramework.FullSearch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
-using static fbognini.EfCoreLocalization.Dashboard.Helpers.JsonOptions;
 
-namespace fbognini.EfCoreLocalization.Dashboard.Handlers;
+namespace fbognini.EfCoreLocalization.Dashboard.Handlers.Translations;
 
 internal static class TranslationHandlers
 {
@@ -45,7 +42,7 @@ internal static class TranslationHandlers
         var response = new PaginationResponse<TranslationDto>
         {
             Pagination = result.Pagination,
-            Items = result.Items.Select(t => TranslationMappings.ToDto(t)).ToList()
+            Items = result.Items.Select(t => ToDto(t)).ToList()
         };
 
         context.Response.ContentType = "application/json";
@@ -77,7 +74,7 @@ internal static class TranslationHandlers
         repository.UpdateTranslation(translation);
 
         context.Response.ContentType = "application/json";
-        await JsonSerializer.SerializeAsync(context.Response.Body, TranslationMappings.ToDto(translation), JsonOptions.Default);
+        await JsonSerializer.SerializeAsync(context.Response.Body, ToDto(translation), JsonOptions.Default);
     }
 
     public static async Task UpdateTranslations(HttpContext context)
@@ -111,5 +108,19 @@ internal static class TranslationHandlers
         }
 
         context.Response.StatusCode = 204;
+    }
+
+    private static TranslationDto ToDto(this Translation translation)
+    {
+        var dto = new TranslationDto()
+        {
+            LanguageId = translation.LanguageId,
+            TextId = translation.TextId,
+            ResourceId = translation.ResourceId,
+            Destination = translation.Destination,
+            UpdatedOnUtc = translation.UpdatedOnUtc,
+        };
+
+        return dto;
     }
 }

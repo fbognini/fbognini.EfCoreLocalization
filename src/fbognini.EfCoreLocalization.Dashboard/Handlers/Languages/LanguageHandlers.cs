@@ -1,6 +1,4 @@
-using fbognini.Core.Domain.Query;
 using fbognini.Core.Domain.Query.Pagination;
-using fbognini.EfCoreLocalization.Dashboard.Handlers.Languages;
 using fbognini.EfCoreLocalization.Dashboard.Helpers;
 using fbognini.EfCoreLocalization.Persistence;
 using fbognini.EfCoreLocalization.Persistence.Entities;
@@ -8,25 +6,15 @@ using fbognini.WebFramework.FullSearch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
-using static fbognini.EfCoreLocalization.Dashboard.Helpers.JsonOptions;
 
-namespace fbognini.EfCoreLocalization.Dashboard.Handlers;
+namespace fbognini.EfCoreLocalization.Dashboard.Handlers.Languages;
 
 internal static class LanguageHandlers
 {
-    public static async Task GetLanguages(HttpContext context)
-    {
-        var repository = context.RequestServices.GetRequiredService<ILocalizationRepository>();
-        var languages = repository.GetLanguages().Select(l => l.ToDto()).ToList();
-
-        context.Response.ContentType = "application/json";
-        await JsonSerializer.SerializeAsync(context.Response.Body, languages, JsonOptions.Default);
-    }
 
     public static async Task GetPaginatedLanguages(HttpContext context)
     {
         var repository = context.RequestServices.GetRequiredService<ILocalizationRepository>();
-        
 
         var criteria = new LanguageSelectCriteria();
 
@@ -104,4 +92,12 @@ internal static class LanguageHandlers
         context.Response.ContentType = "application/json";
         await JsonSerializer.SerializeAsync(context.Response.Body, language.ToDto(), JsonOptions.Default);
     }
+
+    private static LanguageDto ToDto(this Language language) => new LanguageDto()
+    {
+        Id = language.Id,
+        Description = language.Description,
+        IsActive = language.IsActive,
+        IsDefault = language.IsDefault
+    };
 }

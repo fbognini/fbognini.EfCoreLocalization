@@ -1,6 +1,5 @@
 using fbognini.Core.Domain.Query;
 using fbognini.Core.Domain.Query.Pagination;
-using fbognini.EfCoreLocalization.Dashboard.Handlers.Texts;
 using fbognini.EfCoreLocalization.Dashboard.Helpers;
 using fbognini.EfCoreLocalization.Persistence;
 using fbognini.EfCoreLocalization.Persistence.Entities;
@@ -10,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 using static fbognini.EfCoreLocalization.Dashboard.Helpers.JsonOptions;
 
-namespace fbognini.EfCoreLocalization.Dashboard.Handlers;
+namespace fbognini.EfCoreLocalization.Dashboard.Handlers.Texts;
 
 internal static class TextHandlers
 {
@@ -41,7 +40,7 @@ internal static class TextHandlers
         var response = new PaginationResponse<TextDto>
         {
             Pagination = result.Pagination,
-            Items = result.Items.Select(t => TextMappings.ToDto(t)).ToList()
+            Items = result.Items.Select(t => ToDto(t)).ToList()
         };
 
         context.Response.ContentType = "application/json";
@@ -86,4 +85,12 @@ internal static class TextHandlers
         repository.DeleteTranslations(textId, resourceId);
         context.Response.StatusCode = 204;
     }
+
+    private static TextDto ToDto(this Text text) => new TextDto()
+    {
+        TextId = text.TextId,
+        ResourceId = text.ResourceId,
+        Description = text.Description,
+        CreatedOnUtc = text.CreatedOnUtc,
+    };
 }
