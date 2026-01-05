@@ -182,13 +182,7 @@ The Dashboard provides a UI to manage translations.
 
 ### Setup
 
-Register the dashboard services:
-
-```csharp
-builder.Services.AddEfCoreLocalizationDashboard();
-```
-
-Then add the dashboard middleware. If you're using MVC, make sure to register your controller routes first:
+Add the dashboard middleware. If you're using MVC, make sure to register your controller routes first:
 
 ```csharp
 var app = builder.Build();
