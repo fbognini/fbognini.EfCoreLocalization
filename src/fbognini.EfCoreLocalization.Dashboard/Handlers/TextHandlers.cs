@@ -4,6 +4,7 @@ using fbognini.EfCoreLocalization.Dashboard.Handlers.Texts;
 using fbognini.EfCoreLocalization.Dashboard.Helpers;
 using fbognini.EfCoreLocalization.Persistence;
 using fbognini.EfCoreLocalization.Persistence.Entities;
+using fbognini.WebFramework.FullSearch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
@@ -16,25 +17,24 @@ internal static class TextHandlers
     public static async Task GetPaginatedTexts(HttpContext context)
     {
         var repository = context.RequestServices.GetRequiredService<ILocalizationRepository>();
-        
+
         var queryString = context.Request.Query;
-        var page = int.TryParse(queryString["page"], out var p) ? p : 1;
-        var pageSize = int.TryParse(queryString["pageSize"], out var ps) ? ps : 10;
-        var search = queryString["search"].ToString();
         var textId = queryString["textId"].ToString();
         var resourceId = queryString["resourceId"].ToString();
 
-        var criteria = new QueryableCriteria<Text>
+        var criteria = new TextSelectCriteria
         {
-            //Pagination = new PaginationRequest { Page = page, PageSize = pageSize },
-            //Search = search
+            TextId = !string.IsNullOrEmpty(textId) ? textId : null,
+            ResourceId = !string.IsNullOrEmpty(resourceId) ? resourceId : null
         };
 
-        // Apply filters if provided
-        if (!string.IsNullOrEmpty(textId) || !string.IsNullOrEmpty(resourceId))
+        var fullSearchParams = await FullSearchHelper.BindFromQueryAsync(context);
+        if (fullSearchParams != null)
         {
-            // Note: This would need to be handled in the repository or via criteria
-            // For now, we'll pass it through the criteria
+            criteria.LoadFullSearch(fullSearchParams.ToFullSearch());
+            criteria.Search.Fields.Add(x => x.TextId);
+            criteria.Search.Fields.Add(x => x.ResourceId);
+            criteria.Search.Fields.Add(x => x.Description);
         }
 
         var result = repository.GetPaginatedTexts(criteria);

@@ -1,3 +1,28 @@
+$.extend(true, $.fn.dataTable.defaults, {
+    //language: {
+    //    url: "/_content/fbognini.EfCoreLocalization.Dashboard/lib/Datatables/it-IT.json"
+    //},
+    scrollX: true,
+    dom: `
+
+    <'datatables_bottom_wrapper d-flex flex-column flex-md-row justify-content-between align-items-center'<''lB><''f>>
+    <'row'<'col-sm-12'tr>>
+    <'datatables_bottom_wrapper d-flex flex-column flex-md-row justify-content-between align-items-center'<'py-1'i><''p>>`,
+    // dom: "<'row mb-3'<'col-sm-4'l><'col-sm-8 text-end'<'d-flex justify-content-end'fB>>>t<'d-flex align-items-center'<'me-auto'i><'mb-0'p>>",
+    // dom: "<'row mb-3'<'col-sm-8 multi-buttons'B><'col-sm-4 text-right'<'d-flex justify-content-end 'f>>>t<'row mt-3'<'col-sm-4'i><'col-sm-8 d-flex justify-content-end'<'row'<'col-md-auto align-self-end'l><'col-md-auto'p>>>>",
+    lengthMenu: [[10, 25, 50], [10, 25, 50]],
+    lengthChange: true,
+    pageLength: 10,
+    // Paging Setups
+    paging: true,
+    pagingType: 'simple',
+    stateSave: false,
+    serverSide: true,
+    autoWidth: false,
+    buttons: [],
+});
+
+
 // Global configuration - BASE_PATH will be replaced by server
 let BASE_PATH = '{{BASE_PATH}}';
 // If still has placeholder, try to detect from current URL
@@ -12,16 +37,32 @@ const API_BASE = `${BASE_PATH}/api`;
 const router = {
     currentPage: 'languages',
     init() {
-        // Handle hash changes
-        window.addEventListener('hashchange', () => this.handleRoute());
+        // Handle popstate (back/forward navigation)
+        window.addEventListener('popstate', () => this.handleRoute());
         // Handle initial load
         this.handleRoute();
+        
+        // Intercept link clicks to prevent default navigation
+        document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.getAttribute('data-page');
+                this.navigate(page, true);
+            });
+        });
     },
     handleRoute() {
-        const hash = window.location.hash.substring(1) || 'languages';
-        this.navigate(hash);
+        const path = window.location.pathname;
+        const match = path.match(/\/(languages|texts|translations)$/);
+        const page = match ? match[1] : 'languages';
+        this.navigate(page, false);
     },
-    navigate(page) {
+    navigate(page, updateUrl = true) {
+        if (updateUrl) {
+            const newPath = `${BASE_PATH}/${page}`;
+            window.history.pushState({ page }, '', newPath);
+        }
+        
         // Update nav
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
@@ -64,19 +105,19 @@ const languagesManager = {
     init() {
         this.modal = new bootstrap.Modal(document.getElementById('language-modal'));
         this.table = $('#languages-table').DataTable({
-            ajax: {
-                url: `${API_BASE}/languages/paginated`,
-                dataSrc: 'items'
-            },
+            ajax: fullSearchDatatables(() => `${API_BASE}/languages/paginated`),
+            order: [[0, 'asc']],
             columns: [
                 { data: 'id' },
                 { data: 'description' },
                 {
                     data: 'isActive',
+                    orderable: false,
                     render: (data) => data ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>'
                 },
                 {
                     data: 'isDefault',
+                    orderable: false,
                     render: (data) => data ? '<span class="badge bg-primary">Yes</span>' : '<span class="badge bg-secondary">No</span>'
                 },
                 {
@@ -85,8 +126,6 @@ const languagesManager = {
                     render: (data, type, row) => `<button class="btn btn-sm btn-primary" onclick="languagesManager.edit('${row.id}')">Edit</button>`
                 }
             ],
-            order: [[0, 'asc']],
-            pageLength: 25
         });
     },
 
@@ -174,10 +213,8 @@ const textsManager = {
     init() {
         this.modal = new bootstrap.Modal(document.getElementById('text-modal'));
         this.table = $('#texts-table').DataTable({
-            ajax: {
-                url: `${API_BASE}/texts/paginated`,
-                dataSrc: 'items'
-            },
+            ajax: fullSearchDatatables(() => `${API_BASE}/texts/paginated`),
+            ordering: false,
             columns: [
                 { data: 'textId' },
                 { data: 'resourceId' },
@@ -192,8 +229,6 @@ const textsManager = {
                     render: (data, type, row) => `<button class="btn btn-sm btn-danger" onclick="textsManager.delete('${row.textId.replace(/'/g, "\\'")}', '${row.resourceId.replace(/'/g, "\\'")}')">Delete</button>`
                 }
             ],
-            order: [[0, 'asc']],
-            pageLength: 25
         });
     },
 
@@ -295,15 +330,17 @@ const translationsManager = {
             });
 
         this.table = $('#translations-table').DataTable({
-            ajax: {
-                url: `${API_BASE}/translations/paginated`,
-                dataSrc: 'items',
-                data: (d) => {
-                    if (this.filters.languageId) d.languageId = this.filters.languageId;
-                    if (this.filters.textId) d.textId = this.filters.textId;
-                    if (this.filters.resourceId) d.resourceId = this.filters.resourceId;
-                }
-            },
+            ajax: fullSearchDatatables(() => `${API_BASE}/translations/paginated`),
+            order: [[0, 'asc']],
+            //ajax: {
+            //    url: `${API_BASE}/translations/paginated`,
+            //    dataSrc: 'items',
+            //    data: (d) => {
+            //        if (this.filters.languageId) d.languageId = this.filters.languageId;
+            //        if (this.filters.textId) d.textId = this.filters.textId;
+            //        if (this.filters.resourceId) d.resourceId = this.filters.resourceId;
+            //    }
+            //},
             columns: [
                 { data: 'languageId' },
                 { data: 'textId' },
@@ -324,8 +361,6 @@ const translationsManager = {
                     }
                 }
             ],
-            order: [[0, 'asc']],
-            pageLength: 25
         });
     },
 

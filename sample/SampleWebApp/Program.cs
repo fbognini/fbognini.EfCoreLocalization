@@ -40,7 +40,7 @@ await app.ApplyMigrationEFCoreLocalization();
 app.UseRequestLocalizationWithEFCoreLocalization();
 
 var dashboardOptions = new DashboardOptions() { };
-app.UseLocalizationDashboard(options: dashboardOptions);
+app.UseEfCoreLocalizationDashboard(options: dashboardOptions);
 
 app.UseAuthorization();
 

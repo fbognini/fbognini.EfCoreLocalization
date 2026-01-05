@@ -4,6 +4,7 @@ using fbognini.EfCoreLocalization.Dashboard.Handlers.Translations;
 using fbognini.EfCoreLocalization.Dashboard.Helpers;
 using fbognini.EfCoreLocalization.Persistence;
 using fbognini.EfCoreLocalization.Persistence.Entities;
+using fbognini.WebFramework.FullSearch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
@@ -18,37 +19,33 @@ internal static class TranslationHandlers
         var repository = context.RequestServices.GetRequiredService<ILocalizationRepository>();
         
         var queryString = context.Request.Query;
-        var page = int.TryParse(queryString["page"], out var p) ? p : 1;
-        var pageSize = int.TryParse(queryString["pageSize"], out var ps) ? ps : 10;
-        var search = queryString["search"].ToString();
         var languageId = queryString["languageId"].ToString();
         var textId = queryString["textId"].ToString();
         var resourceId = queryString["resourceId"].ToString();
         var onlyNotTranslated = bool.TryParse(queryString["onlyNotTranslated"], out var ont) && ont;
 
-        var criteria = new QueryableCriteria<Translation>
+        var criteria = new TranslationSelectCriteria
         {
-            //Pagination = new PaginationRequest { Page = page, PageSize = pageSize },
-            //Search = search
+            LanguageId = !string.IsNullOrEmpty(languageId) ? languageId : null,
+            TextId = !string.IsNullOrEmpty(textId) ? textId : null,
+            ResourceId = !string.IsNullOrEmpty(resourceId) ? resourceId : null,
+            NotTranslated = onlyNotTranslated ? true : null
         };
 
-        var result = repository.GetPaginatedTranslations(criteria);
-        
-        // Apply additional filters
-        var items = result.Items.AsEnumerable();
-        if (!string.IsNullOrEmpty(languageId))
-            items = items.Where(t => t.LanguageId == languageId);
-        if (!string.IsNullOrEmpty(textId))
-            items = items.Where(t => t.TextId == textId);
-        if (!string.IsNullOrEmpty(resourceId))
-            items = items.Where(t => t.ResourceId == resourceId);
-        if (onlyNotTranslated)
-            items = items.Where(t => string.IsNullOrWhiteSpace(t.Destination));
+        var fullSearchParams = await FullSearchHelper.BindFromQueryAsync(context);
+        if (fullSearchParams != null)
+        {
+            criteria.LoadFullSearch(fullSearchParams.ToFullSearch());
+            criteria.Search.Fields.Add(x => x.TextId);
+            criteria.Search.Fields.Add(x => x.ResourceId);
+            criteria.Search.Fields.Add(x => x.Destination);
+        }
 
+        var result = repository.GetPaginatedTranslations(criteria);
         var response = new PaginationResponse<TranslationDto>
         {
             Pagination = result.Pagination,
-            Items = items.Select(t => TranslationMappings.ToDto(t)).ToList()
+            Items = result.Items.Select(t => TranslationMappings.ToDto(t)).ToList()
         };
 
         context.Response.ContentType = "application/json";

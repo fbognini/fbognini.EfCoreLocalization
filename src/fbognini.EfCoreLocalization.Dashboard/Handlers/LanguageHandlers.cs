@@ -4,6 +4,7 @@ using fbognini.EfCoreLocalization.Dashboard.Handlers.Languages;
 using fbognini.EfCoreLocalization.Dashboard.Helpers;
 using fbognini.EfCoreLocalization.Persistence;
 using fbognini.EfCoreLocalization.Persistence.Entities;
+using fbognini.WebFramework.FullSearch;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
@@ -26,16 +27,16 @@ internal static class LanguageHandlers
     {
         var repository = context.RequestServices.GetRequiredService<ILocalizationRepository>();
         
-        var queryString = context.Request.Query;
-        var page = int.TryParse(queryString["page"], out var p) ? p : 1;
-        var pageSize = int.TryParse(queryString["pageSize"], out var ps) ? ps : 10;
-        var search = queryString["search"].ToString();
 
-        var criteria = new QueryableCriteria<Language>
+        var criteria = new LanguageSelectCriteria();
+
+        var fullSearchParams = await FullSearchHelper.BindFromQueryAsync(context);
+        if (fullSearchParams != null)
         {
-            //Pagination = new PaginationRequest { Page = page, PageSize = pageSize },
-            //Search = search
-        };
+            criteria.LoadFullSearch(fullSearchParams.ToFullSearch());
+            criteria.Search.Fields.Add(x => x.Id);
+            criteria.Search.Fields.Add(x => x.Description);
+        }
 
         var result = repository.GetPaginatedLanguages(criteria);
         var response = new PaginationResponse<LanguageDto>
