@@ -1,10 +1,7 @@
 ﻿var getFullSearchUrlFromDatatablesServerSide = function (url, data) {
 
-
-    console.log(data);
-
     var sorts = [];
-    for (var i = 0; i < data.order?.length; i++) {
+    for (var i = 0; i < data.order.length; i++) {
 
         var column = data.order[i].column;
         var dir = data.order[i].dir;

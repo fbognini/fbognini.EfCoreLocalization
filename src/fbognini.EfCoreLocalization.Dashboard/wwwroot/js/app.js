@@ -1,4 +1,6 @@
-$.extend(true, $.fn.dataTable.defaults, {
+const DataTable = $.fn.dataTable;
+
+$.extend(true, DataTable.defaults, {
     //language: {
     //    url: "/_content/fbognini.EfCoreLocalization.Dashboard/lib/Datatables/it-IT.json"
     //},
@@ -22,6 +24,40 @@ $.extend(true, $.fn.dataTable.defaults, {
     buttons: [],
 });
 
+const combineEndpointWithCurrentSearch = function (url) {
+
+    const baseUrl = new URL(url, window.location.origin);
+    const params = new URLSearchParams(baseUrl.search);
+
+    const currentParams = new URLSearchParams(window.location.search);
+    for (const [key, value] of currentParams.entries()) {
+        params.set(key, value);
+    }
+
+    baseUrl.search = params.toString();
+
+    return baseUrl.toString();
+}
+
+const renderDatatableDateTime = function (to, locale) {
+
+    if (arguments.length === 0) {
+        to = 'dd/MM/yyyy HH:mm';
+        locale = 'en';
+    }
+    else if (arguments.length === 1) {
+        locale = 'en';
+    }
+
+    return function (d, type, row) {
+        if (!d) {
+            return '';
+        }
+
+        return dateFns.format(new Date(d), to);
+    }
+};
+
 
 // Global configuration - BASE_PATH will be replaced by server
 let BASE_PATH = '{{BASE_PATH}}';
@@ -41,7 +77,7 @@ const router = {
         window.addEventListener('popstate', () => this.handleRoute());
         // Handle initial load
         this.handleRoute();
-        
+
         // Intercept link clicks to prevent default navigation
         document.querySelectorAll('.nav-link[data-page]').forEach(link => {
             link.addEventListener('click', (e) => {
@@ -62,7 +98,7 @@ const router = {
             const newPath = `${BASE_PATH}/${page}`;
             window.history.pushState({ page }, '', newPath);
         }
-        
+
         // Update nav
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
@@ -90,6 +126,8 @@ const router = {
                     textsManager.load();
                     break;
                 case 'translations':
+                    // Load filters from URL when navigating to translations page
+                    translationsManager.loadFiltersFromUrl();
                     translationsManager.load();
                     break;
             }
@@ -221,7 +259,7 @@ const textsManager = {
                 { data: 'description' },
                 {
                     data: 'createdOnUtc',
-                    render: (data) => data ? new Date(data).toLocaleString() : ''
+                    render: renderDatatableDateTime()
                 },
                 {
                     data: null,
@@ -313,7 +351,10 @@ const translationsManager = {
 
     init() {
         this.modal = new bootstrap.Modal(document.getElementById('translation-modal'));
-        
+
+        // Load filters from URL
+        this.loadFiltersFromUrl();
+
         // Load languages for filter
         fetch(`${API_BASE}/languages`)
             .then(res => res.json())
@@ -327,20 +368,16 @@ const translationsManager = {
                     option.textContent = `${lang.id} - ${lang.description}`;
                     select.appendChild(option);
                 });
+
+                // Set selected value from filters
+                if (this.filters.languageId) {
+                    select.value = this.filters.languageId;
+                }
             });
 
         this.table = $('#translations-table').DataTable({
-            ajax: fullSearchDatatables(() => `${API_BASE}/translations/paginated`),
+            ajax: fullSearchDatatables(() => combineEndpointWithCurrentSearch(`${API_BASE}/translations/paginated`)),
             order: [[0, 'asc']],
-            //ajax: {
-            //    url: `${API_BASE}/translations/paginated`,
-            //    dataSrc: 'items',
-            //    data: (d) => {
-            //        if (this.filters.languageId) d.languageId = this.filters.languageId;
-            //        if (this.filters.textId) d.textId = this.filters.textId;
-            //        if (this.filters.resourceId) d.resourceId = this.filters.resourceId;
-            //    }
-            //},
             columns: [
                 { data: 'languageId' },
                 { data: 'textId' },
@@ -348,7 +385,7 @@ const translationsManager = {
                 { data: 'destination' },
                 {
                     data: 'updatedOnUtc',
-                    render: (data) => data ? new Date(data).toLocaleString() : ''
+                    render: renderDatatableDateTime()
                 },
                 {
                     data: null,
@@ -364,7 +401,50 @@ const translationsManager = {
         });
     },
 
+    loadFiltersFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        this.filters.languageId = urlParams.get('languageId') || '';
+        this.filters.textId = urlParams.get('textId') || '';
+        this.filters.resourceId = urlParams.get('resourceId') || '';
+
+        // Update form fields
+        if (document.getElementById('filter-language')) {
+            document.getElementById('filter-language').value = this.filters.languageId;
+        }
+        if (document.getElementById('filter-textid')) {
+            document.getElementById('filter-textid').value = this.filters.textId;
+        }
+        if (document.getElementById('filter-resourceid')) {
+            document.getElementById('filter-resourceid').value = this.filters.resourceId;
+        }
+    },
+
+    updateUrlWithFilters() {
+        const url = new URL(window.location.href);
+
+        // Remove existing filter params
+        url.searchParams.delete('languageId');
+        url.searchParams.delete('textId');
+        url.searchParams.delete('resourceId');
+
+        // Add current filters
+        if (this.filters.languageId) {
+            url.searchParams.set('languageId', this.filters.languageId);
+        }
+        if (this.filters.textId) {
+            url.searchParams.set('textId', this.filters.textId);
+        }
+        if (this.filters.resourceId) {
+            url.searchParams.set('resourceId', this.filters.resourceId);
+        }
+
+        // Update URL without reload
+        window.history.pushState({ filters: this.filters }, '', url.toString());
+    },
+
     load() {
+        this.loadFiltersFromUrl();
+
         if (this.table) {
             this.table.ajax.reload();
         } else {
@@ -376,6 +456,8 @@ const translationsManager = {
         this.filters.languageId = document.getElementById('filter-language').value;
         this.filters.textId = document.getElementById('filter-textid').value;
         this.filters.resourceId = document.getElementById('filter-resourceid').value;
+
+        this.updateUrlWithFilters();
         this.load();
     },
 
@@ -384,6 +466,8 @@ const translationsManager = {
         document.getElementById('filter-textid').value = '';
         document.getElementById('filter-resourceid').value = '';
         this.filters = { languageId: '', textId: '', resourceId: '' };
+
+        this.updateUrlWithFilters();
         this.load();
     },
 
@@ -391,9 +475,9 @@ const translationsManager = {
         fetch(`${API_BASE}/translations/paginated?languageId=${encodeURIComponent(languageId)}&textId=${encodeURIComponent(textId)}&resourceId=${encodeURIComponent(resourceId)}`)
             .then(res => res.json())
             .then(result => {
-                const translation = result.items.find(t => 
-                    t.languageId === languageId && 
-                    t.textId === textId && 
+                const translation = result.items.find(t =>
+                    t.languageId === languageId &&
+                    t.textId === textId &&
                     t.resourceId === resourceId
                 );
                 if (translation) {
