@@ -82,11 +82,7 @@ Enable request localization using the database settings.
 ```csharp
 var app = builder.Build();
 
-// ... other middleware
-
 app.UseRequestLocalizationWithEFCoreLocalization();
-
-// ... routing and endpoints
 ```
 
 ## Configuration
@@ -129,6 +125,8 @@ builder.Services.AddEfCoreLocalization(options =>
 | RemovePrefixs                    | string[]  | List of prefixes to strip from the ResourceId.                |
 | RemoveSuffixs                    | string[]  | List of suffixes to strip from the ResourceId.                |
 
+> [!WARNING] 
+> Make sure to re-apply and run migrations if you change the `DefaultSchema`.
 
 ## Usage
 
