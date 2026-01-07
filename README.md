@@ -102,7 +102,8 @@ You can configure localization settings in your `appsettings.json`:
     "GlobalResourceId": null,
     "ResourceIdPrefix": null,
     "RemovePrefixs": [],
-    "RemoveSuffixs": ["Dto"]
+    "RemoveSuffixs": ["Dto"],
+    "CacheExpirationMinutes": 30
   }
 }
 ```
@@ -115,6 +116,7 @@ builder.Services.AddEfCoreLocalization(options =>
     options.DefaultSchema = "localization";
     options.ReturnOnlyKeyIfNotFound = true;
     options.CreateNewRecordWhenDoesNotExists = true;
+    options.CacheExpirationMinutes = 30; // Cache expires after 30 minutes, or null for infinite cache
 });
 ```
 
@@ -128,6 +130,7 @@ builder.Services.AddEfCoreLocalization(options =>
 | CreateNewRecordWhenDoesNotExists | bool      | If `true`, automatically inserts missing keys into the database.       |
 | RemovePrefixs                    | string[]  | List of prefixes to strip from the ResourceId.                |
 | RemoveSuffixs                    | string[]  | List of suffixes to strip from the ResourceId.                |
+| CacheExpirationMinutes           | int?      | Cache expiration time in minutes. If `null`, the cache never expires (infinite). |
 
 
 ## Usage
@@ -233,6 +236,14 @@ When you call `Localizer["MyKey"]`, the library:
 2. Searches for a translation matching the key and culture
 3. Returns the translated text, or the key itself if not found (depending on your settings)
 
+### Caching
+
+Translations are cached in memory to improve performance. By default, the cache never expires. You can configure cache expiration using `CacheExpirationMinutes`:
+
+- Set to `null` (default): Cache never expires, translations are loaded once and kept in memory
+- Set to a number (e.g., `30`): Cache expires after the specified number of minutes, forcing a reload from the database
+
+The cache is checked lazily - expiration is verified when accessing a resource, not on a timer. 
 
 ## Example project
 

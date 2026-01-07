@@ -15,7 +15,14 @@ namespace fbognini.EfCoreLocalization.Localizers
 {
     internal class EFStringLocalizerFactory : IStringLocalizerFactory, IExtendedStringLocalizerFactory
     {
-        private static readonly ConcurrentDictionary<string, IStringLocalizer> _localizers = new();
+        private class CachedLocalizer(IStringLocalizer localizer, DateTime createdOnUtc)
+        {
+            public Guid Identifier { get; } = Guid.NewGuid();
+            public IStringLocalizer Localizer { get; } = localizer;
+            public DateTime CreatedOnUtc { get; } = createdOnUtc;
+        }
+
+        private static readonly ConcurrentDictionary<string, CachedLocalizer> _localizers = new();
 
         private readonly ILocalizationRepository _localizationRepository;
         private readonly EfCoreLocalizationSettings _efCoreLocalizationSettings;
@@ -40,13 +47,40 @@ namespace fbognini.EfCoreLocalization.Localizers
 
         private IStringLocalizer Create(string resourceId)
         {
-            if (_localizers.TryGetValue(resourceId, out IStringLocalizer? localizer))
+            if (_localizers.TryGetValue(resourceId, out CachedLocalizer? cachedLocalizer))
             {
-                return localizer;
+                if (IsCacheValid(cachedLocalizer.CreatedOnUtc))
+                {
+                    return cachedLocalizer.Localizer;
+                }
+                
+                _localizers.TryRemove(resourceId, out _);
             }
 
             var newLocalizer = new EFStringLocalizer(GetResources(resourceId), resourceId, _localizationRepository, _efCoreLocalizationSettings.CreateNewRecordWhenDoesNotExists, _efCoreLocalizationSettings.ReturnOnlyKeyIfNotFound);
-            return _localizers.GetOrAdd(resourceId, newLocalizer);
+            var newCachedLocalizer = new CachedLocalizer(newLocalizer, DateTime.UtcNow);
+            var added = _localizers.GetOrAdd(resourceId, newCachedLocalizer);
+            
+            // If another thread added it while we were creating, check if it's still valid
+            if (added.Identifier != newCachedLocalizer.Identifier && !IsCacheValid(added.CreatedOnUtc))
+            {
+                // The added one is expired, replace it
+                _localizers.TryUpdate(resourceId, newCachedLocalizer, added);
+                return newLocalizer;
+            }
+            
+            return added.Localizer;
+        }
+
+        private bool IsCacheValid(DateTime createdOnUtc)
+        {
+            if (!_efCoreLocalizationSettings.CacheExpirationMinutes.HasValue)
+            {
+                return true;
+            }
+
+            var expirationTime = createdOnUtc.AddMinutes(_efCoreLocalizationSettings.CacheExpirationMinutes.Value);
+            return DateTime.UtcNow < expirationTime;
         }
 
         public void ResetCache()

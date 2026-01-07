@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<PackageId>fbognini.EfCoreLocalization</PackageId>
 		<TargetFrameworks>net8.0</TargetFrameworks>
-		<Version>0.1.0</Version>
+		<Version>0.1.1</Version>
 		<Authors>Francesco Bognini</Authors>
 		<Company />
 		<Description>A flexible, database-driven localization provider for ASP.NET Core using Entity Framework Core</Description>

@@ -29,5 +29,10 @@ namespace fbognini.EfCoreLocalization
         /// Creates a new item in the SQL database if the resource is not found
         /// </summary>
         public bool CreateNewRecordWhenDoesNotExists { get; set; }
+
+        /// <summary>
+        /// Cache expiration time in minutes. If null, the cache never expires (infinite).
+        /// </summary>
+        public int? CacheExpirationMinutes { get; set; }
     }
 }
