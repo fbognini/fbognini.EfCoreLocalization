@@ -30,4 +30,8 @@
 		<None Include="..\..\README.md" Pack="true" PackagePath="" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="fbognini.EfCoreLocalization.Tests" />
+	</ItemGroup>
+
 </Project>
