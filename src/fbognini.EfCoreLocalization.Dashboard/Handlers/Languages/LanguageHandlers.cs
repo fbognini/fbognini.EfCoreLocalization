@@ -40,7 +40,7 @@ internal static class LanguageHandlers
     public static async Task CreateLanguage(HttpContext context)
     {
         var repository = context.RequestServices.GetRequiredService<ILocalizationRepository>();
-        
+
         using var reader = new StreamReader(context.Request.Body);
         var body = await reader.ReadToEndAsync();
         var command = JsonSerializer.Deserialize<CreateLanguageCommand>(body, JsonOptions.Default);

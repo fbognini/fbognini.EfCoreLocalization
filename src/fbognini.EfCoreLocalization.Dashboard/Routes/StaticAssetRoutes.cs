@@ -9,14 +9,13 @@ internal static class StaticAssetRoutes
     public static void MapRoutes(IEndpointRouteBuilder endpoints, string basePath)
     {
         var assetsPath = $"{basePath}{DashboardConstants.AssetsPathPrefix}";
-        
+
         endpoints.MapGet($"{assetsPath}/{{*path}}", async context =>
         {
             var path = context.Request.RouteValues["path"]?.ToString() ?? string.Empty;
             var assembly = Assembly.GetExecutingAssembly();
-            
-            // Convert path to resource name: css/site.css -> fbognini.EfCoreLocalization.Dashboard.wwwroot.css.site.css
-            // MSBuild includes embedded resources with namespace + relative path (dots instead of slashes)
+
+            // MSBuild names an embedded resource after the namespace plus its relative path with dots instead of slashes, so css/site.css becomes fbognini.EfCoreLocalization.Dashboard.wwwroot.css.site.css.
             var normalizedPath = path.Replace('/', '.').Replace('\\', '.');
             var resourceName = $"fbognini.EfCoreLocalization.Dashboard.wwwroot.{normalizedPath}";
 
@@ -28,7 +27,6 @@ internal static class StaticAssetRoutes
                 return;
             }
 
-            // Set content type based on file extension
             var extension = Path.GetExtension(path).ToLowerInvariant();
             context.Response.ContentType = extension switch
             {

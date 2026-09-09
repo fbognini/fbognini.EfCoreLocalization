@@ -14,7 +14,7 @@ internal static class TranslationHandlers
     public static async Task GetPaginatedTranslations(HttpContext context)
     {
         var repository = context.RequestServices.GetRequiredService<ILocalizationRepository>();
-        
+
         var queryString = context.Request.Query;
         var languageId = queryString["languageId"].ToString();
         var textId = queryString["textId"].ToString();
@@ -52,7 +52,7 @@ internal static class TranslationHandlers
     public static async Task UpdateTranslation(HttpContext context)
     {
         var repository = context.RequestServices.GetRequiredService<ILocalizationRepository>();
-        
+
         using var reader = new StreamReader(context.Request.Body);
         var body = await reader.ReadToEndAsync();
         var command = JsonSerializer.Deserialize<UpdateTranslationCommand>(body, JsonOptions.Default);
@@ -80,7 +80,7 @@ internal static class TranslationHandlers
     public static async Task UpdateTranslations(HttpContext context)
     {
         var repository = context.RequestServices.GetRequiredService<ILocalizationRepository>();
-        
+
         using var reader = new StreamReader(context.Request.Body);
         var body = await reader.ReadToEndAsync();
         var commands = JsonSerializer.Deserialize<List<UpdateTranslationCommand>>(body, JsonOptions.Default);

@@ -7,14 +7,8 @@ namespace fbognini.EfCoreLocalization.Dashboard.Extensions;
 public static class ApplicationBuilderExtensions
 {
     /// <summary>
-    /// Adds the Localization Dashboard middleware and maps endpoints to the pipeline.
-    /// This should be called after UseRouting().
-    /// For WebApplication, use AddLocalizationDashboard() instead which handles both middleware and endpoints.
+    /// Registers the dashboard middleware and its endpoints. Call it after UseRouting.
     /// </summary>
-    /// <param name="app">The application builder.</param>
-    /// <param name="path">The base path for the dashboard (default: /localization).</param>
-    /// <param name="options">Optional dashboard configuration options.</param>
-    /// <returns>The application builder for chaining.</returns>
     public static IApplicationBuilder UseEfCoreLocalizationDashboard(
         this IApplicationBuilder app,
         string path = DashboardConstants.DefaultPath,
@@ -41,25 +35,16 @@ public static class ApplicationBuilderExtensions
     }
 
     /// <summary>
-    /// Maps the Localization Dashboard endpoints.
-    /// This should be called after UseRouting() and before UseEndpoints() or MapControllers().
+    /// Maps the dashboard endpoints. Call it after UseRouting and before UseEndpoints or MapControllers.
     /// </summary>
-    /// <param name="endpoints">The endpoint route builder.</param>
-    /// <param name="path">The base path for the dashboard (default: /localization).</param>
-    /// <returns>The endpoint route builder for chaining.</returns>
     public static IEndpointRouteBuilder MapEfCoreLocalizationDashboard(
         this IEndpointRouteBuilder endpoints,
         string path = DashboardConstants.DefaultPath)
     {
         var normalizedPath = NormalizePath(path);
 
-        // Map API endpoints
         ApiRoutes.MapRoutes(endpoints, normalizedPath);
-        
-        // Map static assets
         StaticAssetRoutes.MapRoutes(endpoints, normalizedPath);
-        
-        // Map UI pages
         UiRoutes.MapRoutes(endpoints, normalizedPath);
 
         return endpoints;

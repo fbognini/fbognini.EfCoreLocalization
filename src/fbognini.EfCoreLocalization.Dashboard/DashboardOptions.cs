@@ -20,10 +20,15 @@ namespace fbognini.EfCoreLocalization.Dashboard
         }
 
         public IEnumerable<IDashboardAuthorizationFilter> Authorization { get; set; }
-        public IEnumerable<IDashboardAsyncAuthorizationFilter> AsyncAuthorization 
-        { 
+
+        /// <summary>
+        /// Maximum size accepted by the import endpoint. Defaults to 10 MB.
+        /// </summary>
+        public long MaxImportFileSizeBytes { get; set; } = 10 * 1024 * 1024;
+        public IEnumerable<IDashboardAsyncAuthorizationFilter> AsyncAuthorization
+        {
             get => _asyncAuthorization;
-            set 
+            set
             {
                 _asyncAuthorization = value;
 
@@ -31,7 +36,7 @@ namespace fbognini.EfCoreLocalization.Dashboard
                 {
                     Authorization = [];
                 }
-            } 
+            }
         }
     }
 }

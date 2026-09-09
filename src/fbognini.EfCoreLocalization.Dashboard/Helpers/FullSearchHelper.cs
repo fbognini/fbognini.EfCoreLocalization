@@ -7,13 +7,12 @@ internal static class FullSearchHelper
 {
     public static async Task<FullSearchQueryParameters?> BindFromQueryAsync(HttpContext context)
     {
-        // Create a dummy ParameterInfo for BindAsync
         var parameterInfo = typeof(FullSearchHelper).GetMethod(nameof(DummyMethod))!
             .GetParameters().First();
-        
+
         return await FullSearchQueryParameters.BindAsync(context, parameterInfo);
     }
 
-    // Dummy method to get ParameterInfo
+    // Exists only to hand BindAsync a ParameterInfo, which minimal APIs would otherwise supply themselves.
     public static void DummyMethod(FullSearchQueryParameters _) { }
 }

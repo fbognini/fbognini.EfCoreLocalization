@@ -20,12 +20,14 @@ internal class DashboardMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         var path = context.Request.Path.Value ?? string.Empty;
-        
+
         if (!path.StartsWith(_pathMatch, StringComparison.OrdinalIgnoreCase))
         {
             await _next(context);
             return;
         }
+
+        context.Items[DashboardConstants.OptionsItemKey] = _options;
 
         var dashboardContext = new DashboardContext(context);
 

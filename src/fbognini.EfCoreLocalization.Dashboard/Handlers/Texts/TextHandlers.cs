@@ -50,7 +50,7 @@ internal static class TextHandlers
     public static async Task CreateText(HttpContext context)
     {
         var repository = context.RequestServices.GetRequiredService<ILocalizationRepository>();
-        
+
         using var reader = new StreamReader(context.Request.Body);
         var body = await reader.ReadToEndAsync();
         var command = JsonSerializer.Deserialize<CreateTextCommand>(body, JsonOptions.Default);
@@ -61,7 +61,6 @@ internal static class TextHandlers
             return;
         }
 
-        // Create translations for all languages with empty values
         var languages = repository.GetLanguages().Where(l => l.IsActive).ToList();
         var translations = languages.ToDictionary(l => l.Id, _ => string.Empty);
 
