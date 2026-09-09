@@ -1,0 +1,26 @@
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+charset = utf-8-bom
+
+[*.{js,ts}]
+quote_type = double
+
+[*.{css,scss,cshtml,html}]
+quote_type = double
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.{csproj,props,targets,sln}]
+indent_style = tab
+
+[*.md]
+trim_trailing_whitespace = false
