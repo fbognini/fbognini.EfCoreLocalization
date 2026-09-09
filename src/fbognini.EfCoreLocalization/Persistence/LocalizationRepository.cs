@@ -1,6 +1,7 @@
 ﻿using fbognini.Core.Domain.Query;
 using fbognini.Core.Domain.Query.Pagination;
 using fbognini.EfCoreLocalization.Persistence.Entities;
+using fbognini.EfCoreLocalization.Portability;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -27,17 +28,19 @@ public interface ILocalizationRepository
     void UpdateTranslations(List<Translation> translations);
 
     /// <summary>
-    /// 
+    /// Exports the catalog in a wide, format-neutral shape: one row per key, one language per column.
     /// </summary>
-    /// <param name="translations"></param>
-    /// <param name="all">if true, import all rows, otherwise import only updated rows</param>
-    /// <param name="deleteNotMatched">if true, delete translation when not found</param>
-    void ImportTranslations(IEnumerable<Translation> translations, bool all, bool deleteNotMatched);
+    TranslationsSnapshot ExportTranslations(TranslationsExportFilter? filter = null);
+
+    /// <summary>
+    /// Applies a snapshot to the database and reports what was created, updated and deleted.
+    /// </summary>
+    ImportTranslationsResult ImportTranslations(TranslationsSnapshot snapshot, ImportTranslationsOptions? options = null);
 
     internal void DetachAllEntities();
 }
 
-internal class LocalizationRepository : ILocalizationRepository
+internal partial class LocalizationRepository : ILocalizationRepository
 {
     private List<Language>? _languages;
     private readonly EfCoreLocalizationDbContext _dbContext;
@@ -66,7 +69,7 @@ internal class LocalizationRepository : ILocalizationRepository
     {
         lock (_dbContext)
         {
-           
+
             var existingDefault = _dbContext.Languages.FirstOrDefault(x => x.IsDefault) ?? _dbContext.Languages.FirstOrDefault();
             if (existingDefault == null)
             {
@@ -181,12 +184,12 @@ internal class LocalizationRepository : ILocalizationRepository
 
         var defaultLanguage = languages.FirstOrDefault(x => x.IsDefault) ?? languages.First();
         var defaultTranslation = translations.TryGetValue(defaultLanguage.Id, out string? value) ? value : translations.First().Value;
-        
+
         foreach (var item in languages.Where(x => !translations.ContainsKey(x.Id)))
         {
             translations.Add(item.Id, defaultTranslation);
         }
-        
+
         var utcNow = DateTime.UtcNow;
 
         var text = new Text()
@@ -243,44 +246,6 @@ internal class LocalizationRepository : ILocalizationRepository
 
         lock (_dbContext)
         {
-            _dbContext.SaveChanges();
-        }
-    }
-
-    public void ImportTranslations(IEnumerable<Translation> translations, bool all, bool deleteNotMatched)
-    {
-        var utcNow = DateTime.UtcNow;
-
-        lock (_dbContext)
-        {
-            var existing = GetTranslations(null, null, null, null);
-            foreach (var existingTranslation in existing)
-            {
-                var newTranslation = translations
-                    .FirstOrDefault(x => x.LanguageId == existingTranslation.LanguageId && x.ResourceId == existingTranslation.ResourceId && x.TextId == existingTranslation.TextId);
-
-                if (newTranslation == null)
-                {
-                    if (deleteNotMatched)
-                    {
-                        _dbContext.Translations.Remove(existingTranslation);
-                    }
-
-                    continue;
-                }
-
-                if (!all && existingTranslation.UpdatedOnUtc > newTranslation.UpdatedOnUtc)
-                {
-                    continue;
-                }
-
-                if (!existingTranslation.Destination.Equals(newTranslation.Destination))
-                {
-                    existingTranslation.UpdatedOnUtc = utcNow;
-                    existingTranslation.Destination = newTranslation.Destination;
-                }
-            }
-
             _dbContext.SaveChanges();
         }
     }

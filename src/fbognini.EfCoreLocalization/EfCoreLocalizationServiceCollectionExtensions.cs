@@ -1,5 +1,6 @@
 ﻿using fbognini.EfCoreLocalization.Localizers;
 using fbognini.EfCoreLocalization.Persistence;
+using fbognini.EfCoreLocalization.Portability;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,8 +48,12 @@ namespace fbognini.EfCoreLocalization
         private static IServiceCollection AddEfCoreLocalization(this IServiceCollection services, EfCoreLocalizationSettings settings)
         {
             services.AddSingleton<ILocalizationRepository, LocalizationRepository>();
-            services.AddSingleton<IStringLocalizerFactory, EFStringLocalizerFactory>();
-            services.AddSingleton<IExtendedStringLocalizerFactory, EFStringLocalizerFactory>();
+            services.AddSingleton<EFStringLocalizerFactory>();
+            services.AddSingleton<IStringLocalizerFactory>(sp => sp.GetRequiredService<EFStringLocalizerFactory>());
+            services.AddSingleton<IExtendedStringLocalizerFactory>(sp => sp.GetRequiredService<EFStringLocalizerFactory>());
+
+            services.AddSingleton<ITranslationsPortabilityService, TranslationsPortabilityService>();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ITranslationsFormat, CsvTranslationsFormat>());
 
             return services;
         }
