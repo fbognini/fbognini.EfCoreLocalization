@@ -5,12 +5,16 @@
 
 A flexible, database-driven localization provider for ASP.NET Core using Entity Framework Core. This library eliminates the need for static resource files, allowing dynamic management of translations without application redeployment.
 
+> [!NOTE]
+> This library replaces [fbognini.i18n](https://github.com/fbognini/fbognini.i18n). The `fbognini.i18n` and `fbognini.i18n.Dashboard` NuGet packages are deprecated and no longer maintained: see [Migrating from fbognini.i18n](#migrating-from-fbogninii18n).
+
 ## What's included
 
-This package consists of two NuGet packages:
+This package consists of three NuGet packages:
 
-- **fbognini.EfCoreLocalization** - The core library that provides database-backed localization
+- **fbognini.EfCoreLocalization** - The core library that provides database-backed localization, including CSV export and import
 - **fbognini.EfCoreLocalization.Dashboard** - An optional web dashboard to manage translations through a UI
+- **fbognini.EfCoreLocalization.Excel** - An optional xlsx export and import format
 
 ## Installation
 
@@ -24,6 +28,12 @@ Optionally, install the management dashboard:
 
 ```bash
 dotnet add package fbognini.EfCoreLocalization.Dashboard
+```
+
+Optionally, install the Excel export and import format:
+
+```bash
+dotnet add package fbognini.EfCoreLocalization.Excel
 ```
 
 ## Quick start
@@ -97,8 +107,10 @@ You can configure localization settings in your `appsettings.json`:
     "CreateNewRecordWhenDoesNotExists": true,
     "GlobalResourceId": null,
     "ResourceIdPrefix": null,
-    "RemovePrefixs": [],
-    "RemoveSuffixs": ["Dto"],
+    "RemovePrefixsFromTypes": [],
+    "RemoveSuffixsFromTypes": ["Dto"],
+    "IgnoreResourceLocation": false,
+    "RemovePrefixsFromLocations": [],
     "CacheExpirationMinutes": 30
   }
 }
@@ -118,15 +130,18 @@ builder.Services.AddEfCoreLocalization(options =>
 
 ### Reference
 
-| Option                           | Type      | Description                                                           |
-|----------------------------------|-----------|-----------------------------------------------------------------------|
-| DefaultSchema                    | string    | The database schema for localization tables.                           |
-| GlobalResourceId                 | string?   | If set, overrides the ResourceId for all lookups.                  |
-| ReturnOnlyKeyIfNotFound          | bool      | If `true`, returns the key string when a translation is missing.       |
-| CreateNewRecordWhenDoesNotExists | bool      | If `true`, automatically inserts missing keys into the database.       |
-| RemovePrefixs                    | string[]  | List of prefixes to strip from the ResourceId.                |
-| RemoveSuffixs                    | string[]  | List of suffixes to strip from the ResourceId.                |
-| CacheExpirationMinutes           | int?      | Cache expiration time in minutes. If `null`, the cache never expires (infinite). |
+| Option | Type | Description |
+| --- | --- | --- |
+| DefaultSchema | string? | The database schema for the localization tables. If empty, the provider default schema is used. |
+| GlobalResourceId | string? | If set, it is used as the ResourceId for every lookup, `[LocalizationKey]` included. |
+| ResourceIdPrefix | string? | Prefix prepended, dot separated, to the computed ResourceId. |
+| RemovePrefixsFromTypes | string[] | Prefixes stripped from the type name when it is used as ResourceId. |
+| RemoveSuffixsFromTypes | string[] | Suffixes stripped from the type name when it is used as ResourceId. |
+| IgnoreResourceLocation | bool | If `true`, the location is not prepended to the base name when the ResourceId is built from a base name and a location, as it happens in views. |
+| RemovePrefixsFromLocations | string[] | Prefixes stripped from the `location.baseName` ResourceId. |
+| ReturnOnlyKeyIfNotFound | bool | If `true`, returns the key when a translation is missing, otherwise returns the full search key (`ResourceId.Key.Culture`). |
+| CreateNewRecordWhenDoesNotExists | bool | If `true`, automatically inserts missing keys into the database. |
+| CacheExpirationMinutes | int? | Cache expiration time in minutes. If `null`, the cache never expires (infinite). |
 
 > [!WARNING] 
 > Make sure to re-apply and run migrations if you change the `DefaultSchema`.
@@ -221,6 +236,90 @@ var dashboardOptions = new DashboardOptions
 };
 ```
 
+> [!WARNING]
+> The dashboard exposes an import endpoint that can delete keys in bulk. If you replace the default localhost
+> filter, make sure the replacement is at least as strict.
+
+## Export & import
+
+Translations can be exported to a file, handed to a translator, and imported back, getting the counts of
+what was added, updated and deleted — numbers meant for your own audit log.
+
+The file uses a **wide** layout: one row per key, one column per language.
+
+| ResourceId | TextId | Description | it-IT | en-US |
+|---|---|---|---|---|
+| dashboard | Home.Title | Page title | Benvenuto | Welcome |
+| dashboard | Home.Body | | Corpo | |
+
+CSV is built into the core package. For Excel, install the optional package and register the format:
+
+```bash
+dotnet add package fbognini.EfCoreLocalization.Excel
+```
+
+```csharp
+builder.Services.AddEfCoreLocalizationExcel();
+```
+
+Both are consumed through `ITranslationsPortabilityService`, which picks the format, applies the file and
+refreshes the localizer cache:
+
+```csharp
+app.MapGet("/translations/export", (ITranslationsPortabilityService service, string? format) =>
+{
+    var translationsFormat = service.ResolveFormat(format);   // "csv", "xlsx", "excel", ".xlsx" or a file name
+
+    var buffer = new MemoryStream();
+    service.Export(buffer, new TranslationsExportFilter { ResourceIds = ["dashboard"] }, translationsFormat.Name);
+    buffer.Position = 0;
+
+    return Results.File(buffer, translationsFormat.ContentType, $"translations{translationsFormat.FileExtension}");
+});
+
+app.MapPost("/translations/import", async (ITranslationsPortabilityService service, IFormFile file) =>
+{
+    await using var stream = file.OpenReadStream();
+
+    var result = service.Import(stream, new ImportTranslationsOptions(), file.FileName);
+
+    logger.LogInformation("Import: {Created} keys created, {Updated} translations updated, {Deleted} keys deleted",
+        result.TextsCreated, result.TranslationsUpdated, result.TextsDeleted);
+
+    return Results.Ok(result);
+}).DisableAntiforgery();
+```
+
+The same flow is available from the Dashboard, under *Translations → Export / Import*.
+
+### Import options
+
+| Option | Default | Description |
+|---|---|---|
+| `CreateMissingTexts` | `true` | Creates keys that are in the file but not in the database |
+| `CreateMissingTranslations` | `true` | Creates translations that are in the file but not in the database |
+| `DeleteNotMatched` | `false` | Deletes keys that are in the database but not in the file, **limited to the resource ids the file contains** |
+| `DryRun` | `false` | Computes and returns the counters without writing anything |
+| `AllowedResourceIds` | `null` | Rejects rows whose resource id is outside this list |
+
+**An empty cell means "no value supplied", never "delete"**: the stored translation is left untouched and
+counted in `TranslationsSkipped`. Deletions only ever happen through `DeleteNotMatched`.
+
+> [!WARNING]
+> `DeleteNotMatched` deletes every key of the exported resource ids that is missing from the file. If the export
+> was filtered, everything filtered out is deleted. Run the import with `DryRun = true` first and check
+> `TextsDeleted` before applying it — that is exactly what the Dashboard does.
+
+Rejected rows do not stop the others: the rest is imported and every problem is reported in
+`ImportTranslationsResult.Errors` with its source row, its kind and a reason. Only a structurally unusable file
+throws — one whose language columns match no language at all.
+
+### Localizer cache
+
+An import that changed something drops the localizer cache, so the new texts are served right away. The cache is
+per process: if you run more than one instance, set `CacheExpirationMinutes` so that the others pick the changes
+up as well. Adding a *language* still requires a restart, because the supported cultures are read once at startup.
+
 ## How it works
 
 The library stores translations in three main tables:
@@ -246,6 +345,43 @@ The cache is checked lazily - expiration is verified when accessing a resource, 
 ## Example project
 
 Check out the `SampleWebApp` project in the repository for a complete working example.
+
+## Migrating from fbognini.i18n
+
+This library is the successor of [fbognini.i18n](https://github.com/fbognini/fbognini.i18n).
+
+| Deprecated package | Use instead |
+| --- | --- |
+| [fbognini.i18n](https://www.nuget.org/packages/fbognini.i18n/) | [fbognini.EfCoreLocalization](https://www.nuget.org/packages/fbognini.EfCoreLocalization/) |
+| [fbognini.i18n.Dashboard](https://www.nuget.org/packages/fbognini.i18n.Dashboard/) | [fbognini.EfCoreLocalization.Dashboard](https://www.nuget.org/packages/fbognini.EfCoreLocalization.Dashboard/) |
+
+Replace the namespace `fbognini.i18n` with `fbognini.EfCoreLocalization`, then update the API and the settings.
+
+| fbognini.i18n | fbognini.EfCoreLocalization |
+| --- | --- |
+| `AddI18N(...)` | `AddLocalization()` + `AddEfCoreLocalization(...)` |
+| `InitializeI18N()` | `ApplyMigrationEFCoreLocalization()` |
+| `UseRequestLocalizationI18N()` | `UseRequestLocalizationWithEFCoreLocalization()` |
+| `UseI18nDashboard()` | `UseEfCoreLocalizationDashboard()` |
+| `I18nContext` | `EfCoreLocalizationDbContext` |
+| `II18nRepository` | `ILocalizationRepository` |
+| `[I18NKey]` | `[LocalizationKey]` |
+
+The configuration section is now named `EfCoreLocalization` instead of `I18nSettings`, and the settings are flat.
+
+| I18nSettings | EfCoreLocalizationSettings |
+| --- | --- |
+| `ConnectionString` | removed, configured on `AddDbContext<EfCoreLocalizationDbContext>` |
+| `Schema` | `DefaultSchema` |
+| `UseCache` | removed, the cache is always enabled and tuned with `CacheExpirationMinutes` |
+| `CookieName` | removed, register your own `CookieRequestCultureProvider` on `RequestLocalizationOptions` |
+| `Localizer.OverrideResourceId` | `GlobalResourceId` |
+| `Localizer.BaseResourceId` | `ResourceIdPrefix` |
+| `Localizer.RemovePrefixs` | `RemovePrefixsFromTypes` |
+| `Localizer.RemoveSuffixs` | `RemoveSuffixsFromTypes` |
+| `Localizer.CreateNewRecordWhenDoesNotExists` | `CreateNewRecordWhenDoesNotExists` |
+
+The `Languages`, `Texts` and `Translations` tables kept the same structure: only the schema changed, `Texts.Created` became `Texts.CreatedOnUtc`, `Translations.Updated` became `Translations.UpdatedOnUtc` and the `Configurations` table is no longer used. The full step by step guide, including the SQL to copy the existing rows, is in the [fbognini.i18n readme](https://github.com/fbognini/fbognini.i18n#migration-guide).
 
 ## Requirements
 
