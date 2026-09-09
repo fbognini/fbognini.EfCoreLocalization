@@ -36,7 +36,10 @@ jobs:
       run: dotnet restore
 
     - name: Build the project
-      run: dotnet build --configuration Release /p:ContinuousIntegrationBuild=true
+      run: |
+        dotnet build --configuration Release \
+          /p:ContinuousIntegrationBuild=true \
+          /p:Version=${{ env.CLEAN_VERSION }}
 
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal
@@ -45,6 +48,8 @@ jobs:
       run: |
         dotnet pack --configuration Release --no-build \
           /p:Version=${{ env.CLEAN_VERSION }} \
+          /p:IncludeSymbols=true \
+          /p:SymbolPackageFormat=snupkg \
           --output nuget
 
     - name: 'Upload Artifact'
@@ -76,4 +81,5 @@ jobs:
       run: |
         dotnet nuget push nuget/*.nupkg \
           --api-key $NUGET_API_KEY \
-          --source $NUGET_SOURCE
+          --source $NUGET_SOURCE \
+          --skip-duplicate
