@@ -17,10 +17,6 @@ namespace SampleWebApp.Pages
             _localizationRepository = localizationRepository;
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
         public InputModel Input { get; set; } = new();
 
@@ -40,7 +36,6 @@ namespace SampleWebApp.Pages
 
         public async Task<IActionResult> OnPostAsync( CancellationToken cancellationToken = default)
         {
-            // If we got this far, something failed, redisplay form
             return Page();
         }
     }

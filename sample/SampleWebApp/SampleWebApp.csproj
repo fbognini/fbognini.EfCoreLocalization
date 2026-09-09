@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\fbognini.EfCoreLocalization.Dashboard\fbognini.EfCoreLocalization.Dashboard.csproj" />
+		<ProjectReference Include="..\..\src\fbognini.EfCoreLocalization.Excel\fbognini.EfCoreLocalization.Excel.csproj" />
   </ItemGroup>
 
 </Project>
