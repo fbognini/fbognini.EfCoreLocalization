@@ -53,14 +53,14 @@ namespace fbognini.EfCoreLocalization.Localizers
                 {
                     return cachedLocalizer.Localizer;
                 }
-                
+
                 _localizers.TryRemove(resourceId, out _);
             }
 
             var newLocalizer = new EFStringLocalizer(GetResources(resourceId), resourceId, _localizationRepository, _efCoreLocalizationSettings.CreateNewRecordWhenDoesNotExists, _efCoreLocalizationSettings.ReturnOnlyKeyIfNotFound);
             var newCachedLocalizer = new CachedLocalizer(newLocalizer, DateTime.UtcNow);
             var added = _localizers.GetOrAdd(resourceId, newCachedLocalizer);
-            
+
             // If another thread added it while we were creating, check if it's still valid
             if (added.Identifier != newCachedLocalizer.Identifier && !IsCacheValid(added.CreatedOnUtc))
             {
@@ -68,7 +68,7 @@ namespace fbognini.EfCoreLocalization.Localizers
                 _localizers.TryUpdate(resourceId, newCachedLocalizer, added);
                 return newLocalizer;
             }
-            
+
             return added.Localizer;
         }
 
@@ -140,8 +140,13 @@ namespace fbognini.EfCoreLocalization.Localizers
 
         private string GetCompositeResourceId(string baseName, string location)
         {
-            string resourceKey = _efCoreLocalizationSettings.IgnoreResourceLocation || string.IsNullOrWhiteSpace(location) || baseName.StartsWith(location) 
-                ? baseName 
+            if (!string.IsNullOrWhiteSpace(_efCoreLocalizationSettings.GlobalResourceId))
+            {
+                return _efCoreLocalizationSettings.GlobalResourceId;
+            }
+
+            string resourceKey = _efCoreLocalizationSettings.IgnoreResourceLocation || string.IsNullOrWhiteSpace(location) || baseName.StartsWith(location)
+                ? baseName
                 : $"{location}.{baseName}";
 
             foreach (var prefix in _efCoreLocalizationSettings.RemovePrefixsFromLocations.Where(s => resourceKey.StartsWith(s)))
@@ -155,18 +160,16 @@ namespace fbognini.EfCoreLocalization.Localizers
                 resourceKey = $"{_efCoreLocalizationSettings.ResourceIdPrefix}.{resourceKey}";
             }
 
-            //if (string.IsNullOrWhiteSpace(location))
-            //    return baseName;
-
-            //// it's ok for views, be careful for other situations
-            //var name = string.Join('.', baseName.Split('.').TakeLast(2));
-            //return name;
-
             return resourceKey;
         }
 
         public string GetResourceIdFromType(Type resourceSource)
         {
+            if (!string.IsNullOrWhiteSpace(_efCoreLocalizationSettings.GlobalResourceId))
+            {
+                return _efCoreLocalizationSettings.GlobalResourceId;
+            }
+
             var attribute = resourceSource.GetCustomAttributes(typeof(LocalizationKeyAttribute), false).SingleOrDefault();
             if (attribute == null)
             {

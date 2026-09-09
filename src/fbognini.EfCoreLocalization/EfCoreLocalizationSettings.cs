@@ -4,9 +4,9 @@ namespace fbognini.EfCoreLocalization
 {
     public class EfCoreLocalizationSettings
     {
-        public string? DefaultSchema { get; set; }       
+        public string? DefaultSchema { get; set; }
 
-        
+
         /// <summary>
         /// If GlobalResourceId has a value, it will be used as ResourceId for everything => Only property names are used to find the translations
         /// </summary>

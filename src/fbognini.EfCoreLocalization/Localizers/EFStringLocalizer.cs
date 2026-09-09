@@ -72,7 +72,7 @@ namespace fbognini.EfCoreLocalization.Localizers
             }
 
             error = true;
-            
+
             if (_createNewRecordWhenDoesNotExists)
             {
                 var cultures = _repository.AddTranslations(id, _resourceKey, string.Empty, new Dictionary<string, string>() { [culture.ToString()] = id });
@@ -88,11 +88,6 @@ namespace fbognini.EfCoreLocalization.Localizers
             {
                 return id;
             }
-
-            //if (_returnKeyOnlyIfNotFound)
-            //{
-            //    return key;
-            //}
 
             return _resourceKey + "." + computedKey;
         }
