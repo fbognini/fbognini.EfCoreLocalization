@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<PackageId>fbognini.EfCoreLocalization.Excel</PackageId>
+		<TargetFrameworks>net8.0</TargetFrameworks>
+		<Version>0.2.0</Version>
+		<Authors>Francesco Bognini</Authors>
+		<Company />
+		<Description>Excel (xlsx) export and import format for fbognini.EfCoreLocalization</Description>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageProjectUrl>https://github.com/fbognini/fbognini.EfCoreLocalization</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/fbognini/fbognini.EfCoreLocalization</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>localization;efcore;entity-framework;aspnetcore;i18n;translations;excel;xlsx;import;export;</PackageTags>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="ClosedXML" Version="0.104.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\fbognini.EfCoreLocalization\fbognini.EfCoreLocalization.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\LICENSE" Pack="true" PackagePath="" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+</Project>
